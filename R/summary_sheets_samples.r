@@ -1,5 +1,7 @@
 pipeline.summarySheetsSamples <- function()
 {
+  if(ncol(metadata) > 1000) return()
+  
   dir.create(output.paths["Summary Sheets Samples"], showWarnings=FALSE)
 
   #### Summary Sheets ####
@@ -424,12 +426,7 @@ pipeline.summarySheetsSamples <- function()
              col=c("black","gray","black","black"), lty=c(1,1,2,3),
              lwd=c(1,1,1,2), cex=0.7)
 
-
-
-
-
-
-      if (preferences$geneset.analysis)
+      if (preferences$geneset.analysis && preferences$geneset.analysis.samplespots)
       {
         par(mar=c(0,0,0,0))
 

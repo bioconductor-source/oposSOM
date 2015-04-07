@@ -60,23 +60,20 @@ pipeline.prepare <- function()
 
   if (!is.logical(preferences$geneset.analysis))
   {
-    util.warn("Invalid value of \"geneset.analysis\". Using FALSE")
-    preferences$geneset.analysis <<- FALSE
+    util.warn("Invalid value of \"geneset.analysis\". Using TRUE")
+    preferences$geneset.analysis <<- TRUE
+  }
+
+  if (!is.logical(preferences$geneset.analysis.samplespots))
+  {
+    util.warn("Invalid value of \"geneset.analysis.samplespots\". Using FALSE")
+    preferences$geneset.analysis.samplespots<<- FALSE
   }
 
   if (!is.logical(preferences$geneset.analysis.exact))
   {
     util.warn("Invalid value of \"geneset.analysis.exact\". Using FALSE")
     preferences$geneset.analysis.exact <<- FALSE
-  }
-
-  if (!is.numeric(preferences$max.parallel.cores) ||
-      preferences$max.parallel.cores < 1 ||
-      preferences$max.parallel.cores > detectCores())
-  {
-    preferences$max.parallel.cores <<- detectCores() / 2
-    util.warn("Invalid value of \"max.parallel.cores\". Using",
-              preferences$max.parallel.cores)
   }
 
   if (!is.numeric(preferences$spot.threshold.samples) ||
@@ -374,7 +371,7 @@ pipeline.prepare <- function()
 
 
   ## SOM
-  util.info("Processing SOM")
+  util.info("Processing SOM. This may take several time until next notification.")
 
   som.result <<- som.init(indata, xdim=preferences$dim.1stLvlSom, ydim=preferences$dim.1stLvlSom, init="linear")
 
