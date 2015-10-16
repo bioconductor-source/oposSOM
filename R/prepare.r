@@ -7,11 +7,6 @@ pipeline.prepare <- function()
     preferences$dataset.name <<- "Unnamed"
   }
 
-  if (!preferences$error.model %in% c("replicates", "all.samples", "groups")) {
-    util.warn("Invalid value of \"error.model\". Using \"all.samples\"")
-    preferences$error.model <<- "all.samples"
-  }
-
   if (!is.numeric(preferences$dim.1stLvlSom) || preferences$dim.1stLvlSom < 1)
   {
     util.warn("Invalid value of \"dim.1stLvlSom\". Using 20")
@@ -220,10 +215,6 @@ pipeline.prepare <- function()
   if (length(na.rows) > 0)
   {
     indata <<- indata[-na.rows,]
-
-    if (!is.null(indata.original)) {
-      indata.original <<- indata.original[-na.rows,]
-    }
     util.warn("Removed NAs from data set")
   }
 
@@ -321,43 +312,12 @@ pipeline.prepare <- function()
   if (preferences$sample.quantile.normalization)
   {
     indata <<- Quantile.Normalization(indata)
-
-    if (!is.null(indata.original))
-    {
-      indata.original <<- Quantile.Normalization(indata.original)
-      util.warn("Separate quantile normalization of indata AND indata.original")
-    }
   }
 
-  if (!is.null(indata.original) && any(dim(indata) != dim(indata.original)))
-  {
-    indata.original <<- NULL
-    util.warn("Existing 'indata.original' does not fit 'indata' object")
-  }
+  colnames(indata) <<- make.unique(colnames(indata))
+  names(group.labels) <<- make.unique(names(group.labels))
+  names(group.colors) <<- make.unique(names(group.colors))
 
-  if (is.null(indata.original))
-  {
-    indata.original <<- indata
-  }
-
-  if (preferences$error.model == "replicates" && max(table(colnames(indata))) == 1)
-  {
-    util.warn("No replicates found in column names. Using \"all.samples\"")
-    preferences$error.model <<- "all.samples"
-  }
-
-  if (preferences$error.model == "replicates")
-  {
-    indata <<- do.call(cbind, by(t(indata), colnames(indata), colMeans))[,unique(colnames(indata))]
-    group.labels <<- group.labels[colnames(indata)]
-    group.colors <<- group.colors[colnames(indata)]
-    indata.sample.mean <<- tapply(indata.sample.mean, colnames(indata.original), mean)[colnames(indata)]
-  } else
-  {
-    colnames(indata) <<- make.unique(colnames(indata))
-    names(group.labels) <<- make.unique(names(group.labels))
-    names(group.colors) <<- make.unique(names(group.colors))
-  }
 
   indata.gene.mean <<- rowMeans(indata)
 

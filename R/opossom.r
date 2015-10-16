@@ -7,7 +7,6 @@ opossom.new <- function(preferences=NULL)
   env$colramp <- NULL
   env$Fdr.g.m <- NULL
   env$fdr.g.m <- NULL
-  env$fdr.m <- NULL
   env$files.name <- NULL
   env$gene.descriptions <- NULL
   env$gene.ids <- NULL
@@ -24,6 +23,7 @@ opossom.new <- function(preferences=NULL)
   env$gs.def.list.categories <- NULL
   env$samples.GSZ.scores <- NULL
   env$spot.list.correlation <- NULL
+  env$spot.list.dmap <- NULL
   env$spot.list.group.overexpression <- NULL
   env$spot.list.kmeans <- NULL
   env$spot.list.overexpression <- NULL
@@ -31,7 +31,6 @@ opossom.new <- function(preferences=NULL)
   env$spot.list.underexpression <- NULL
   env$indata <- NULL
   env$indata.gene.mean <- NULL
-  env$indata.original <- NULL
   env$indata.sample.mean <- NULL
   env$loglog.group.metadata <- NULL
   env$loglog.metadata <- NULL
@@ -42,7 +41,6 @@ opossom.new <- function(preferences=NULL)
   env$p.g.m <- NULL
   env$p.m <- NULL
   env$perc.DE.m <- NULL
-  env$sd.g.m <- NULL
   env$som.nodes <- NULL
   env$som.result <- NULL
   env$secLvlSom.20.20 <- NULL
@@ -66,7 +64,6 @@ opossom.new <- function(preferences=NULL)
 
   # Set default preferences
   env$preferences <- list(dataset.name = "Unnamed",
-                          error.model = "all.samples",
                           dim.1stLvlSom = 20,
                           dim.2ndLvlSom = 20,
                           training.extension = 1,
