@@ -72,7 +72,9 @@ pipeline.differenceAnalyses = function()
     m <- length(samples.indata[[2]])
 
     S2.x <- apply(indata[,samples.indata[[1]],drop=FALSE],1,var)
+    S2.x[which(S2.x==0)] = min(S2.x[which(S2.x!=0)])
     S2.y <- apply(indata[,samples.indata[[2]],drop=FALSE],1,var)
+    S2.y[which(S2.y==0)] = min(S2.y[which(S2.y!=0)])
 
     t.g.m[,d] <<- indata.d[,d] / sqrt( S2.x/n + S2.y/m )
 
