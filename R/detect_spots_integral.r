@@ -906,14 +906,14 @@ pipeline.detectSpotsIntegral <- function()
     }))
   }
   
-  uh <- matrix(uh, preferences$dim.1stLvlSom)
-  peak.matrix = matrix( F, preferences$dim.1stLvlSom, preferences$dim.1stLvlSom )
+  uh <- matrix(log10(uh), preferences$dim.1stLvlSom)
+  peak.matrix <- matrix( FALSE, preferences$dim.1stLvlSom, preferences$dim.1stLvlSom )
 
   for( pos.x in 1:preferences$dim.1stLvlSom )
     for( pos.y in 1:preferences$dim.1stLvlSom )
     {
       neighbor.dists <- sapply( get.neighbors(pos.x, pos.y, preferences$dim.1stLvlSom), function(x) uh[x[1],x[2]] )
-      peak.matrix[pos.x, pos.y] <- all( uh[ pos.x, pos.y] <= neighbor.dists ) && uh[ pos.x, pos.y] > max(uh)/3
+      peak.matrix[pos.x, pos.y] <- all( uh[ pos.x, pos.y] <= neighbor.dists )
     }
   
   spot.matrix <- matrix(0, preferences$dim.1stLvlSom, preferences$dim.1stLvlSom )
@@ -931,8 +931,9 @@ pipeline.detectSpotsIntegral <- function()
       expansion <- spot.neighbors[ which.min( expansion.d ) ]
       
       if( ( mean( uh[c(spot.members,expansion)] ) < spot.d[length(spot.d)] && 
-            spot.d[length(spot.d)] < spot.d[length(spot.d)-1] )
-          || length(spot.members) > preferences$dim.1stLvlSom^2*0.1 ) 
+            spot.d[length(spot.d)] < spot.d[length(spot.d)-1] && 
+            spot.d[length(spot.d)-1] < spot.d[length(spot.d)-2] ) || 
+          length(spot.members) > preferences$dim.1stLvlSom^2*0.1 ) 
       {
         break
       } else
@@ -942,6 +943,7 @@ pipeline.detectSpotsIntegral <- function()
       }
       
     }
+#    if( mean(uh[spot.members]) > mean(uh) ) 
     spot.matrix[spot.members] <- max(spot.matrix,na.rm=T)+1
   }
   spot.matrix[which(spot.matrix==0)] <- NA
@@ -949,11 +951,12 @@ pipeline.detectSpotsIntegral <- function()
   
   
   spot.list.dmap <<- list()
-  spot.list.dmap$overview.map <<- log10(uh)
+  spot.list.dmap$overview.map <<- uh
   spot.list.dmap$overview.mask <<- rep(NA, preferences$dim.1stLvlSom ^ 2)
   spot.list.dmap$filtered <<- FALSE
   spot.list.dmap$spots <<- list()
   
+  count.cluster <- 1
   for (i in seq_along(sort(unique(na.omit(as.vector(spot.matrix))))) )
   {
     spot.metagenes <- which(spot.matrix==i)
@@ -961,20 +964,43 @@ pipeline.detectSpotsIntegral <- function()
     
     if (length(spot.genes) > 0)
     {
-      spot.list.dmap$overview.mask[spot.metagenes] <<- i
-      spot.list.dmap$spots[[LETTERS[i]]] <<- list()
-      spot.list.dmap$spots[[LETTERS[i]]]$metagenes <<- spot.metagenes
-      spot.list.dmap$spots[[LETTERS[i]]]$genes <<- spot.genes
-      spot.list.dmap$spots[[LETTERS[i]]]$mask <<- rep(NA, preferences$dim.1stLvlSom * preferences$dim.1stLvlSom)
-      spot.list.dmap$spots[[LETTERS[i]]]$mask[spot.metagenes] <<- 1
+      spot.list.dmap$overview.mask[spot.metagenes] <<- count.cluster
+      spot.list.dmap$spots[[LETTERS[count.cluster]]] <<- list()
+      spot.list.dmap$spots[[LETTERS[count.cluster]]]$metagenes <<- spot.metagenes
+      spot.list.dmap$spots[[LETTERS[count.cluster]]]$genes <<- spot.genes
+      spot.list.dmap$spots[[LETTERS[count.cluster]]]$mask <<- rep(NA, preferences$dim.1stLvlSom * preferences$dim.1stLvlSom)
+      spot.list.dmap$spots[[LETTERS[count.cluster]]]$mask[spot.metagenes] <<- 1
       
-      spot.list.dmap$spots[[LETTERS[i]]]$position <<-
+      spot.list.dmap$spots[[LETTERS[count.cluster]]]$position <<-
         colMeans(apply(som.result$code.sum[spot.metagenes, 1:2]+1, 2, range))
       
-      spot.list.dmap$spots[[LETTERS[i]]]$beta.statistic <<-
-        get.beta.statistic(set.data=metadata[spot.list.dmap$spots[[LETTERS[i]]]$metagenes,,drop=FALSE],
-                           weights=som.result$code.sum[spot.list.dmap$spots[[LETTERS[i]]]$metagenes,]$nobs)
+      spot.list.dmap$spots[[LETTERS[count.cluster]]]$beta.statistic <<-
+        get.beta.statistic(set.data=metadata[spot.list.dmap$spots[[LETTERS[count.cluster]]]$metagenes,,drop=FALSE],
+                           weights=som.result$code.sum[spot.list.dmap$spots[[LETTERS[count.cluster]]]$metagenes,]$nobs)
+      
+      count.cluster <- count.cluster + 1
     }
+  }
+  
+  spot.list.dmap$spotdata <<-
+    t(sapply(spot.list.dmap$spots, function(x)
+    {
+      if (length(x$genes > 0))
+      {
+        colMeans(indata[x$genes,,drop=FALSE])
+      } else
+      {
+        rep(0, ncol(indata))
+      }
+    }))
+  
+  sig.spots <- which( apply( spot.list.dmap$spotdata, 1, function(x) sd(x) > sd(spot.list.dmap$spotdata) ) )
+  if( length(sig.spots) > 0 )
+  {
+    spot.list.dmap$spots <<- spot.list.dmap$spots[sig.spots]
+    spot.list.dmap$overview.mask[which(!spot.list.dmap$overview.mask%in%sig.spots)] <<- NA
+    spot.list.dmap$overview.mask[!is.na(spot.list.dmap$overview.mask  )] <<-
+      match(spot.list.dmap$overview.mask[!is.na(spot.list.dmap$overview.mask)], sort(unique(na.omit(as.vector(spot.list.dmap$overview.mask)))))
   }
   
   start.spot <- which.min( apply( sapply(spot.list.dmap$spots, function(x) x$position ), 2, min ) )

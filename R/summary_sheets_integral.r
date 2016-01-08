@@ -449,7 +449,7 @@ pipeline.summarySheetsIntegral <- function()
           length(x$Genes)
         })), cex=0.6, adj=0)
 
-        text(x.coords[4], y.coords, gs.def.list.categories[names(top.gs.p)], cex=0.6, adj=0)
+        text(x.coords[4], y.coords, sapply(gs.def.list, function(x) { x$Type })[names(top.gs.p)], cex=0.6, adj=0)
         rect(x.coords[5]-0.01, y.coords+0.01, 1, 0, border="white", col="white")
         text(x.coords[5], y.coords, names(top.gs.p), cex=0.6, adj=0)
 
@@ -534,7 +534,7 @@ pipeline.summarySheetsIntegral <- function()
 
       if (any(grep("GenesetSOM",files.name)))
       {
-        out <-cbind(out, Type = gs.def.list.categories[o])
+        out <-cbind(out, Type = sapply(gs.def.list, function(x) { x$Type })[o])
       }
 
       high.low.threshold <- mean(indata.gene.mean)
