@@ -6,7 +6,7 @@ pipeline.genesetOverviews <- function()
 
   ### GSZ heatmaps
   summary.spots.fisher.p <-
-    sapply(spot.list.overexpression$spots, function(x) { x$Fisher.p[names(gs.def.list)] })
+    sapply(get(paste("spot.list.",preferences$standard.spot.modules,sep=""))$spots, function(x) { x$Fisher.p[names(gs.def.list)] })
 
 
   for (i in names(table(sapply(gs.def.list, function(x) { x$Type }))))
@@ -46,14 +46,14 @@ pipeline.genesetOverviews <- function()
     colnames(top.scores) <- colnames(indata)
 
     heatmap.wrap(x=top.scores, cex.main=2,
-                 col=colorRampPalette(c("blue4","blue","gray90","orange","red4"))(1000),
+                 col=color.palette.heatmaps(1000),
                  mar=c(10,20), scale="n", zlim=max(max(top.scores),-min(top.scores))*c(-1,1),
                  ColSideColors=group.colors, cexDend=0.6)
 
     par(new=TRUE, mar=c(3.5,29,35.5,2))
 
     image(matrix(c(1:1000), 1000, 1), axes=FALSE,
-          col=colorRampPalette(c("blue4","blue","gray90","orange","red4"))(1000))
+          col=color.palette.heatmaps(1000))
 
     box()
     axis(1, c(0,0.5,1), round(max(max(top.scores),-min(top.scores))*c(-1,0,1)), cex.axis=1.4)
@@ -61,14 +61,14 @@ pipeline.genesetOverviews <- function()
     mtext(paste("Category",i), cex=1, line=30)
 
     heatmap.wrap(x=top.scores, cex.main=2,
-                 col=colorRampPalette(c("blue4","blue","gray90","orange","red4"))(1000),
+                 col=color.palette.heatmaps(1000),
                  mar=c(10,20), scale="n",  zlim=max(max(top.scores),-min(top.scores))*c(-1,1),
                  ColSideColors=group.colors, cexDend=0.6, Colv=NA)
 
     par(new=TRUE, mar=c(3.5,29,35.5,2))
 
     image(matrix(c(1:1000), 1000, 1), axes=FALSE,
-          col=colorRampPalette(c("blue4","blue","gray90","orange","red4"))(1000))
+          col=color.palette.heatmaps(1000))
 
     box()
     axis(1, c(0,0.5,1), round(max(max(top.scores),-min(top.scores))*c(-1,0,1)), cex.axis=1.4)
@@ -88,7 +88,7 @@ pipeline.genesetOverviews <- function()
     }))
 
     heatmap.wrap(x=top.scores[,o], cex.main=2,
-                 col=colorRampPalette(c("blue4","blue","gray90","orange","red4"))(1000),
+                 col=color.palette.heatmaps(1000),
                  mar=c(10,20), scale="n",
                  zlim=max(max(top.scores),-min(top.scores))*c(-1,1),
                  ColSideColors=group.colors[o], cexDend=0.6, Colv=NA)
@@ -96,7 +96,7 @@ pipeline.genesetOverviews <- function()
     par(new=TRUE, mar=c(3.5,29,35.5,2) )
 
     image(matrix(c(1:1000), 1000, 1), axes=FALSE,
-          col=colorRampPalette(c("blue4","blue","gray90","orange","red4"))(1000))
+          col=color.palette.heatmaps(1000))
 
     box()
     axis( 1, c(0,0.5,1), round(max(max(top.scores),-min(top.scores))*c(-1,0,1)), cex.axis=1.4 )
@@ -107,17 +107,7 @@ pipeline.genesetOverviews <- function()
   ### p Histogram + FDR
   if (preferences$geneset.analysis.exact)
   {
-    all.sets.GSZ.p <- unlist(sapply(spot.list.samples, function(x)
-    {
-      sapply(x$spots, function(x) { x$GSZ.p.value })
-    }))
-
-    all.samples.GSZ.p <- unlist(sapply(spot.list.samples, function(x)
-    {
-      x$GSZ.p.value
-    }))
-
-    p <- c(all.sets.GSZ.p, all.samples.GSZ.p)
+    p <- as.vector(sapply(spot.list.samples, function(x)  x$GSZ.p.value  ))
 
     suppressWarnings({ fdrtool.result <- fdrtool(p, statistic="pvalue", verbose=FALSE, plot=FALSE) })
     fdr.spot.list.samples <- fdrtool.result$lfdr

@@ -4,11 +4,6 @@ pipeline.groupSpecificGenesets <- function()
   
   for (gr in seq_along(unique(group.labels)))
   {
-    samples.GSZ.scores <- do.call(cbind, lapply(spot.list.samples, function(x)
-    {
-      x$GSZ.score[names(gs.def.list)]
-    }))
-
     gs.p.values <- apply(samples.GSZ.scores, 1, function(x)
     {
       wilcox.test(x[which(group.labels!=unique(group.labels)[gr])],
@@ -54,7 +49,7 @@ pipeline.groupSpecificGenesets <- function()
       plot(which(!is.na(n.map), arr.ind=TRUE), xlim=lim, ylim=lim, pch=16,
             axes=FALSE, xlab="",ylab="", xaxs="i", yaxs="i",
             cex=0.5 + na.omit(as.vector(n.map)) / max(n.map,na.rm=TRUE) * 2.8,
-            col=colramp(1000)[(na.omit(as.vector(n.map)) - min(n.map,na.rm=TRUE)) /
+            col=color.palette.heatmaps(1000)[(na.omit(as.vector(n.map)) - min(n.map,na.rm=TRUE)) /
                               max(1, (max(n.map,na.rm=TRUE) - min(n.map,na.rm=TRUE))) *
                               999 + 1])
 
@@ -109,7 +104,7 @@ pipeline.groupSpecificGenesets <- function()
       label.string <- sub("1", "+", label.string)
       label.string <- sub("0", ".", label.string)
       label.x <- tapply(barplot.x, group.labels, mean)[unique(group.labels)]
-      text(label.x, ylim[2]*0.95, label.string, col=groupwise.group.colors,cex=2.5)
+      text(label.x, ylim[2]*0.92, label.string, col=groupwise.group.colors,cex=2.5)
     
     n.map <- matrix(0,preferences$dim.1stLvlSom,preferences$dim.1stLvlSom)
     gs.nodes <- som.nodes[names(gene.ids)[which(gene.ids %in% gs.def.list[[top.gs[i]]]$Genes)]]
@@ -124,7 +119,7 @@ pipeline.groupSpecificGenesets <- function()
     plot(which(!is.na(n.map), arr.ind=TRUE), xlim=lim, ylim=lim, pch=16,
          axes=FALSE, xlab="",ylab="", xaxs="i", yaxs="i",
          cex=0.5 + na.omit(as.vector(n.map)) / max(n.map,na.rm=TRUE) * 2.8,
-         col=colramp(1000)[(na.omit(as.vector(n.map)) - min(n.map,na.rm=TRUE)) /
+         col=color.palette.heatmaps(1000)[(na.omit(as.vector(n.map)) - min(n.map,na.rm=TRUE)) /
                              max(1, (max(n.map,na.rm=TRUE) - min(n.map,na.rm=TRUE))) *
                              999 + 1])
     

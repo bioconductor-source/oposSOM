@@ -19,8 +19,8 @@ summary HTML file.
 \tabular{ll}{
 Package: \tab oposSOM\cr
 Type: \tab Package\cr
-Version: \tab 1.7.3\cr
-Date: \tab 2016-08-01\cr
+Version: \tab 1.9.2\cr
+Date: \tab 2016-24-03\cr
 License: \tab GPL (>= 2)\cr
 }
 }
@@ -43,23 +43,18 @@ of genome-wide expression landscapes on Bioconductor. (Bioinformatics 2015)
 \examples{
 # Example with artificial data
 env <- opossom.new(list(dataset.name="Example",
-                        dim.1stLvlSom=20,
-                        dim.2ndLvlSom=20,
-                        geneset.analysis=TRUE))
+                        dim.1stLvlSom=20))
 
 env$indata <- matrix(runif(10000), 1000, 10)
 
-env$group.labels <- c(rep(c("ABC", "DEF", "GHI"), each=3), "JKL")
+env$group.labels <- "auto"
 
 opossom.run(env)
 
 # Real Example - This will take several minutes
 #env <- opossom.new(list(dataset.name="Tissues",
 #                        dim.1stLvlSom=30,
-#                        dim.2ndLvlSom=30,
 #                        geneset.analysis=TRUE,
-#                        spot.coresize.groupmap=5,
-#                        spot.threshold.groupmap=0.75,
 #                        pairwise.comparison.list=list(
 #                          list("Homeostasis"=c(1, 2), "Imune System"=c(9, 10)),
 #                          list("Homeostasis"=c(1, 2), "Muscle"=c(8))

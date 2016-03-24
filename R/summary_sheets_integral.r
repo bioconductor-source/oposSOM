@@ -10,7 +10,7 @@ pipeline.summarySheetsIntegral <- function()
       layout(matrix(c(1, 2), 1, 2), c(2, 1), 1)
       par(mar=c(5, 4, 4, 1))
 
-      col <- if(main!="D-Clusters") colramp(1000) else colorRampPalette(c("blue2","white","red2"))(1000)
+      col <- if(main!="D-Clusters") color.palette.portraits(1000) else colorRampPalette(c("blue2","white","red2"))(1000)
       image(matrix(set.list$overview.map, preferences$dim.1stLvlSom, preferences$dim.1stLvlSom),
             axes=FALSE, col=col, main=main, cex.main=1.5)
 
@@ -31,7 +31,7 @@ pipeline.summarySheetsIntegral <- function()
     beta.scores <- sapply(set.list$spots, function(x) { x$beta.statistic$beta.score })
 
     image(matrix(set.list$overview.mask, preferences$dim.1stLvlSom), axes=FALSE,
-          col=colramp(1000)[1 + 999 * beta.scores / max(beta.scores)],
+          col=color.palette.heatmaps(1000)[1 + 999 * beta.scores / max(beta.scores)],
           main=main, cex.main=1.5)
 
     mtext("beta-scores", 3)
@@ -44,7 +44,7 @@ pipeline.summarySheetsIntegral <- function()
     box()
     par(new=TRUE)
     par(mar=c(12, 9, 12, 9))
-    image(matrix(1:100, 1, 100), col = colramp(1000), axes=FALSE)
+    image(matrix(1:100, 1, 100), col = color.palette.heatmaps(1000), axes=FALSE)
     axis(2, c(0,1), c(0, round(max(beta.scores),1)), las=2)
     box()
 
@@ -55,7 +55,7 @@ pipeline.summarySheetsIntegral <- function()
     image(x=c(1:preferences$dim.1stLvlSom),
           y=c(1:preferences$dim.1stLvlSom),
           z=matrix(set.list$overview.mask, preferences$dim.1stLvlSom, preferences$dim.1stLvlSom),
-          col=colramp(max(set.list$overview.mask, na.rm=TRUE)),
+          col=colorRampPalette(c("darkblue","blue","lightblue","green2","yellow","red","darkred"))(max(set.list$overview.mask, na.rm=TRUE)),
           axes=TRUE, main=main, cex.main=1.5, xlab="", ylab="", las=1)
 
     mtext("annotation", 3)
@@ -85,7 +85,7 @@ pipeline.summarySheetsIntegral <- function()
     {
       top.GS <- lapply(set.list$spots, function(x) names(head(x$Fisher.p , 3)))
 
-      leg.col <- colramp(length(set.list$spots))
+      leg.col <- colorRampPalette(c("darkblue","blue","lightblue","green2","yellow","red","darkred"))(length(set.list$spots))
       leg.col <- as.vector(sapply(leg.col, c, NA, NA))
       leg.num <- names(set.list$spots)
       leg.num <- as.vector(sapply(leg.num, c, NA, NA))
@@ -100,27 +100,13 @@ pipeline.summarySheetsIntegral <- function()
     }
 
     # Spot - Sample - Heatmap
-    sample.spot.expression <- matrix(NA, 0, ncol(indata))
-
-    for (m in seq_along(set.list$spots))
-    {
-      mean.FC <- apply(metadata, 2, function(x)
-      {
-        max(x[set.list$spots[[m]]$metagenes])
-      })
-
-      sample.spot.expression <- rbind(sample.spot.expression, mean.FC)
-    }
-
-    rownames(sample.spot.expression) <- names(set.list$spots)
-
     sample.spot.expression.image <-
-      if (nrow(sample.spot.expression) > 1)
+      if (nrow(set.list$spotdata) > 1)
       {
-        t(sample.spot.expression[nrow(sample.spot.expression):1,])
+        t(set.list$spotdata[nrow(set.list$spotdata):1,])
       } else
       {
-        as.matrix(sample.spot.expression[nrow(sample.spot.expression):1,])
+        as.matrix(set.list$spotdata[nrow(set.list$spotdata):1,])
       }
 
     layout(matrix(c(0,2,0,3,1,0,0,4,5), 3, 3), heights=c(0.8,6,2), widths=c(0.5,5,3))
@@ -128,10 +114,10 @@ pipeline.summarySheetsIntegral <- function()
     par(mar=c(0,0,0,0))
 
     image(1:ncol(indata),
-          1:nrow(sample.spot.expression),
+          1:nrow(set.list$spotdata),
           sample.spot.expression.image,
-          col=colorRampPalette(c("blue4","blue","gray90","orange","red4"))(1000),
-          axes=FALSE, ylim=0.5+c(0,nrow(sample.spot.expression)), yaxs="i", xlab="", ylab="",
+          col=color.palette.heatmaps(1000),
+          axes=FALSE, ylim=0.5+c(0,nrow(set.list$spotdata)), yaxs="i", xlab="", ylab="",
           zlim=max(max(sample.spot.expression.image),-min(sample.spot.expression.image))*c(-1,1))
 
     box()
@@ -142,9 +128,9 @@ pipeline.summarySheetsIntegral <- function()
     }
 
     plot(0, type="n", xlab="", ylab="", axes=FALSE, xlim=c(0,1),
-         ylim=0.5+c(0,nrow(sample.spot.expression)), yaxs="i")
+         ylim=0.5+c(0,nrow(set.list$spotdata)), yaxs="i")
 
-    text(0.7, nrow(sample.spot.expression):1, rownames(sample.spot.expression),
+    text(0.7, nrow(set.list$spotdata):1, rownames(set.list$spotdata),
          adj=1, cex=1.8)
 
     par(mar=c(1,0,2,0))
@@ -161,9 +147,9 @@ pipeline.summarySheetsIntegral <- function()
     par(mar=c(0,0,0,0))
 
     plot(0, type="n", xlab="", ylab="", axes=FALSE, xlim=c(0,1),
-         ylim=0.5+c(0,nrow(sample.spot.expression)), yaxs="i")
+         ylim=0.5+c(0,nrow(set.list$spotdata)), yaxs="i")
 
-    pos <- as.vector(sapply(c(1:nrow(sample.spot.expression)),
+    pos <- as.vector(sapply(c(1:nrow(set.list$spotdata)),
                             function(x) { c(x-0.26, x, x+0.26) }))
 
     text(0.05,
@@ -173,9 +159,7 @@ pipeline.summarySheetsIntegral <- function()
 
     par(mar=c(5,2,4,2))
 
-    image(matrix(1:100, 100, 1),
-          col=colorRampPalette(c("blue4","blue","gray90","orange","red4"))(1000),
-          axes=FALSE, xlab="")
+    image(matrix(1:100, 100, 1),col=color.palette.heatmaps(1000),axes=FALSE, xlab="")
 
     axis(1, round(max(max(sample.spot.expression.image),
                       -min(sample.spot.expression.image)) * c(-1,1), 1),
@@ -187,27 +171,24 @@ pipeline.summarySheetsIntegral <- function()
     # Spot - SampleGSZ - Heatmap
     if (preferences$geneset.analysis)
     {
-      sample.spot.GSZ <- sapply(spot.list.samples, function(x)
-      {
-        return(x$GSZ.score[unlist(top.GS)])
-      })
-
+      #sample.spot.GSZ
+      sample.spot.GSZ.image <- samples.GSZ.scores[unlist(top.GS),]
       sample.spot.GSZ.image <-
-        if (nrow(sample.spot.GSZ) > 1)
+        if (nrow(sample.spot.GSZ.image) > 1)
         {
-          t(sample.spot.GSZ[nrow(sample.spot.GSZ):1,])
+          t(sample.spot.GSZ.image[nrow(sample.spot.GSZ.image):1,])
         } else
         {
-          as.matrix(sample.spot.GSZ[nrow(sample.spot.GSZ):1,])
+          as.matrix(sample.spot.GSZ.image[nrow(sample.spot.GSZ.image):1,])
         }
-
       sample.spot.GSZ.image[which(is.na(sample.spot.GSZ.image))] <- 0
+      
       layout(matrix(c(0,2,0,3,1,0,0,4,5), 3, 3), heights=c(0.8,6,2), widths=c(0.5,5,3))
       par(mar=c(0,0,0,0))
 
-      image(1:ncol(indata), 1:nrow(sample.spot.GSZ), sample.spot.GSZ.image,
-            axes=FALSE, ylim=0.5+c(0,nrow(sample.spot.GSZ)), yaxs="i", xlab="", ylab="",
-            col=colorRampPalette(c("blue4","blue","gray90","orange","red4"))(1000),
+      image(1:ncol(indata), 1:ncol(sample.spot.GSZ.image), sample.spot.GSZ.image,
+            axes=FALSE, ylim=0.5+c(0,ncol(sample.spot.GSZ.image)), yaxs="i", xlab="", ylab="",
+            col=color.palette.heatmaps(1000),
             zlim=max(max(sample.spot.GSZ.image),-min(sample.spot.GSZ.image))*c(-1,1))
 
       box()
@@ -219,9 +200,9 @@ pipeline.summarySheetsIntegral <- function()
       }
 
       plot(0, type="n", xlab="", ylab="", axes=FALSE, xlim=c(0,1),
-           ylim=0.5+c(0,nrow(sample.spot.expression)), yaxs="i")
+           ylim=0.5+c(0,nrow(set.list$spotdata)), yaxs="i")
 
-      text(0.7, nrow(sample.spot.expression):1, names(set.list$spots),
+      text(0.7, nrow(set.list$spotdata):1, names(set.list$spots),
            adj=1, cex=1.8)
 
       par(mar=c(1,0,2,0))
@@ -236,21 +217,20 @@ pipeline.summarySheetsIntegral <- function()
       }
 
       par(mar=c(0,0,0,0))
-
       plot(0, type="n", xlab="", ylab="", axes=FALSE, xlim=c(0,1),
-           ylim=0.5+c(0,nrow(sample.spot.GSZ)), yaxs="i")
+           ylim=0.5+c(0,ncol(sample.spot.GSZ.image)), yaxs="i")
 
-      pos <- as.vector(sapply(c(1:nrow(sample.spot.GSZ)),
+      pos <- as.vector(sapply(c(1:ncol(sample.spot.GSZ.image)),
                               function(x) { c(x-0.26, x, x+0.26) }))
 
-      text(0.05, rev(c(1:nrow(sample.spot.GSZ)) + c(0.16,0,-0.16)),
+      text(0.05, rev(c(1:ncol(sample.spot.GSZ.image)) + c(0.16,0,-0.16)),
            unlist(lapply(set.list$spots, function(x) { names(head(x$Fisher.p , 3)) })),
            adj=0, cex=1) #0.6
 
       par(mar=c(5,2,4,2))
 
       image(matrix(1:100, 100, 1),
-            col=colorRampPalette(c("blue4","blue","gray90","orange","red4"))(1000),
+            col=color.palette.heatmaps(1000),
             axes=FALSE, xlab="")
 
       axis(1,
@@ -325,7 +305,7 @@ pipeline.summarySheetsIntegral <- function()
 
       par(mar=c(2,3,3,1))
 
-      col <- if(main!="D-Clusters") colramp(1000) else colorRampPalette(c("blue2","white","red2"))(1000)
+      col <- if(main!="D-Clusters") color.palette.portraits(1000) else colorRampPalette(c("blue2","white","red2"))(1000)
       image(matrix(set.list$overview.map, preferences$dim.1stLvlSom, preferences$dim.1stLvlSom),
             axes=FALSE, col=col, main="Overview Map", cex.main=1.5)
 
@@ -556,16 +536,6 @@ pipeline.summarySheetsIntegral <- function()
     }
   }
 
-  # directories to store the results
-  dirnames <- c("pdf"=as.character(output.paths["Summary Sheets Integral"]),
-                "csv"=file.path(output.paths["CSV"], "Spot Lists"))
-
-  for (dirname in dirnames)
-  {
-    dir.create(dirname, showWarnings=FALSE, recursive=TRUE)
-  }
-  
-  
   # pdf sheets to generate
   pdf.sheets <- list(
     list("Overexpression.pdf", "Overexpression Spots", spot.list.overexpression),
@@ -592,38 +562,39 @@ pipeline.summarySheetsIntegral <- function()
       list("Group Overexpression Spots", spot.list.group.overexpression)
   }
 
+  dirname <- as.character(output.paths["Summary Sheets Integral"])
   pdf.sheets <- lapply(pdf.sheets, function(x)
   {
     list(fn=plot.set.list,
-         args=list(path=file.path(dirnames[["pdf"]], x[[1]]), main=x[[2]], set.list=x[[3]]))
+         args=list(path=file.path(dirname, x[[1]]), main=x[[2]], set.list=x[[3]]))
   })
-
-  csv.sheets <- lapply(csv.sheets, function(x)
-  {
-    list(fn=csv.set.list,
-         args=list(path=dirnames[["csv"]], main=x[[1]], set.list=x[[2]]))
-  })
-
-
-
-
-  util.info("Writing:", file.path(dirnames[["pdf"]], "*.pdf"))
-
+  
+  util.info("Writing:", file.path(dirname, "*.pdf"))
+  
+  dir.create(dirname, showWarnings=FALSE, recursive=TRUE)
   dummy = sapply( seq_along(pdf.sheets), function(i, pdf.sheets)
   {
     do.call(pdf.sheets[[i]]$fn, pdf.sheets[[i]]$args)
   }, pdf.sheets)
-
-
-
-
-  util.info("Writing:", file.path(dirnames[["csv"]], "*.csv"))
   
-  dummy = sapply( seq_along(csv.sheets), function(i, csv.sheets)
+  
+  if(output.paths["CSV"]!="")
   {
-    do.call(csv.sheets[[i]]$fn, csv.sheets[[i]]$args)
-  }, csv.sheets)
-
+    dirname <- file.path(output.paths["CSV"], "Spot Lists")
+    csv.sheets <- lapply(csv.sheets, function(x)
+    {
+      list(fn=csv.set.list,
+           args=list(path=dirname, main=x[[1]], set.list=x[[2]]))
+    })
+  
+    util.info("Writing:", file.path(dirname, "*.csv"))
+    
+    dir.create(dirname, showWarnings=FALSE, recursive=TRUE)
+    dummy = sapply( seq_along(csv.sheets), function(i, csv.sheets)
+    {
+      do.call(csv.sheets[[i]]$fn, csv.sheets[[i]]$args)
+    }, csv.sheets)
+  }
 
 
 }

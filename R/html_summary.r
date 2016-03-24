@@ -63,10 +63,14 @@ pipeline.htmlSummary <- function()
         <dd>", nrow(indata), "</dd>
         <dt>ID type of genes</dt>
         <dd>", preferences$database.id.type , "</dd>
-        <dt>Dimension 1st level SOM</dt>
+        <dt>Dimension of the SOM</dt>
         <dd>", preferences$dim.1stLvlSom, " x ", preferences$dim.1stLvlSom, "</dd>
-        <dt>Analysis finished</dt>
+        <dt>Date</dt>
         <dd>", format(Sys.time(), "%a %b %d %X %Y %Z"), "</dd>
+        <dt>Analyst</dt>
+        <dd>", preferences$system.info["user"], "</dd>
+        <dt>oposSOM version</dt>
+        <dd>", preferences$session.info$otherPkgs$oposSOM$Version, "</dd>
       </dl>
 
       <h1>Results</h1>
@@ -85,27 +89,31 @@ pipeline.htmlSummary <- function()
         These reports comprise the SOM portraits in standard and alternative
         color scales, as well as supporting maps and profiles which provide
         supplementary information about the 1st level SOM.
-      </p>
+      </p>", sep="", file=outfile)
 
-      <ul>
-        <li>
-          <a href=\"Expression Portraits.pdf\" target=\"_blank\">
-            1st Level SOM Expression Portraits (PDF)
-          </a>
-        </li>
-        <li>
-          <a href=\"Expression Portraits - alternative scales.pdf\" target=\"_blank\">
-            Alternative Color Scales: absolute expression, WAD, loglogFC (PDF)
-          </a>
-        </li>
-        <li>
-          <a href=\"Rank Maps.pdf\" target=\"_blank\">
-            Rank Portraits: FC, WAD, t-score (PDF)
-          </a>
-        </li>
-      </ul>
+  if(ncol(indata) < 1000)
+  {
+      cat("
+        <ul>
+          <li>
+            <a href=\"Expression Portraits.pdf\" target=\"_blank\">
+              1st Level SOM Expression Portraits (PDF)
+            </a>
+          </li>
+          <li>
+            <a href=\"Expression Portraits - alternative scales.pdf\" target=\"_blank\">
+              Alternative Color Scales: absolute expression, WAD, loglogFC (PDF)
+            </a>
+          </li>
+          <li>
+            <a href=\"Rank Maps.pdf\" target=\"_blank\">
+              Rank Portraits: FC, WAD, t-score (PDF)
+            </a>
+          </li>
+        </ul>", sep="", file=outfile)
+  }
 
-      <ul>
+      cat("<ul>
         <li>
           <a href=\"Supporting Maps&amp;Profiles/Supporting Maps.pdf\" target=\"_blank\">
             Supporting Maps (PDF)
@@ -125,21 +133,31 @@ pipeline.htmlSummary <- function()
           </a>
         </li>
       </ul>
-
-      <h2>Sample Summaries</h2>
-
-      <p>
-        Summary page for the individual samples.
-      </p>
-
       <ul>
         <li>
-          <a href=\"Summary Sheets - Samples/0verview.html\" target=\"_blank\">
-            Sample Reports (HTML)
+          <a href=\"CSV Sheets/Gene localization.csv\" target=\"_blank\">
+          Localization of the genes within the SOM (CSV)
           </a>
         </li>
       </ul>", sep="", file=outfile)
 
+  if(ncol(indata) < 1000)
+  {
+    cat("<h2>Sample Summaries</h2>
+  
+        <p>
+          Summary page for the individual samples.
+        </p>
+  
+        <ul>
+          <li>
+            <a href=\"Summary Sheets - Samples/0verview.html\" target=\"_blank\">
+              Sample Reports (HTML)
+            </a>
+          </li>
+        </ul>", sep="", file=outfile)
+  }
+  
   if (preferences$geneset.analysis)
   {
     cat("
@@ -212,13 +230,26 @@ pipeline.htmlSummary <- function()
       <h2>Group Analyses</h2>
 
       <p>
+        Analyses based on PAT-wise aggregated data, including clustering dendrogram, 
+        portraits and assotiation to the sample groups.
+      </p>
+        
+        <ul>
+          <li>
+          <a href=\"Summary Sheets - PATs/PAT report.pdf\" target=\"_blank\">
+          PAT Report (PDF)
+          </a>
+        </li>
+      </ul>
+
+      <p>
         Analyses based on group-wise aggregated data, including portraits,
         clustering and functional analyses.
       </p>
 
       <ul>
         <li>
-          <a href=\"Summary Sheets - Groups/0verview.html\">
+          <a href=\"Summary Sheets - Groups/0verview.html\" target=\"_blank\">
             Group Analysis Reports (HTML)
           </a>
         </li>
@@ -238,7 +269,7 @@ pipeline.htmlSummary <- function()
 
       <ul>
         <li>
-          <a href=\"Summary Sheets - Differences/0verview.html\">
+          <a href=\"Summary Sheets - Differences/0verview.html\" target=\"_blank\">
             Differences Analysis Reports (HTML)
           </a>
         </li>

@@ -79,7 +79,7 @@ pipeline.3rdLvlSummarySheets <- function()
     par(mfrow=c(1,2))
     par(mar=c(8, 3, 6, 3))
 
-    col <- if(main!="D-Clusters") colramp(1000) else colorRampPalette(c("blue2","white","red2"))(1000)
+    col <- if(main!="D-Clusters") color.palette.portraits(1000) else colorRampPalette(c("blue2","white","red2"))(1000)
     image(matrix(set.list$overview.map, preferences$dim.1stLvlSom, preferences$dim.1stLvlSom),
           axes=FALSE, col=col, main=paste("Overview map,",main), cex.main=1.5)
 
@@ -276,21 +276,8 @@ pipeline.3rdLvlSummarySheets <- function()
       spot.group.assoc <- spot.group.assoc[unique(group.labels) , ,drop=FALSE]
       colnames(spot.group.assoc) <- names(set.list$spots)
 
-      spot.goup.mean.number <- sapply(spot.list.samples, function(x)
-      {
-        sum (sapply(x$spots, function(y)
-        {
-          if (main %in% c("Sample-Underexpression"))
-          {
-            if (y$type == "underexpressed") 1 else 0
-          }  else
-          {
-            if (y$type == "overexpressed") 1 else 0
-          }
-        }))
-      })
-
-      spot.goup.mean.number <- tapply(spot.goup.mean.number, group.labels, mean)[unique(group.labels)]
+      
+      spot.goup.mean.number <- tapply(colSums(sample.spot.matrix), group.labels, mean)[unique(group.labels)]
 
       layout(matrix(c(1, 2), 1, 2), c(2, 1), 1)
       par(mar=c(5, 4, 4, 2))
@@ -344,30 +331,14 @@ pipeline.3rdLvlSummarySheets <- function()
   }
 
   dirname <- file.path(paste(files.name, "- Results"), "3rd lvl Spot Analysis")
-
-  filename <-
-    if (spot.list.overexpression$filtered)
-    {
-      file.path(dirname, "Spot Report - Overexpression Spots filtered.pdf")
-    } else
-    {
-      file.path(dirname, "Spot Report - Overexpression Spots.pdf")
-    }
-
+  
+  filename <- file.path(dirname, "Spot Report - Overexpression Spots.pdf")
   util.info("Writing:", filename)
   pdf(filename, 29.7/2.54, 21/2.54)
   plot.set.list.reports(set.list=spot.list.overexpression, main="Overexpression Spots")
   dev.off()
 
-  filename <-
-    if (spot.list.underexpression$filtered)
-    {
-      file.path(dirname, "Spot Report - Underexpression Spots filtered.pdf")
-    } else
-    {
-      file.path(dirname, "Spot Report - Underexpression Spots.pdf")
-    }
-
+  filename <- file.path(dirname, "Spot Report - Underexpression Spots.pdf")
   util.info("Writing:", filename)
   pdf(filename, 29.7/2.54, 21/2.54)
   plot.set.list.reports(set.list=spot.list.underexpression, main="Underexpression Spots")

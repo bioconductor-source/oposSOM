@@ -20,17 +20,10 @@ opossom.run(env)
     the opossom environment created with \code{opossom.new} according to the users' preferences
   }
 }
-\author{
-Author: Henry Loeffler-Wirth <wirth@izbi.uni-leipzig.de>
-
-Maintainer: Martin Kalcher <mkalcher@porkbox.net>
-}
 \examples{
 # Example with artificial data
 env <- opossom.new(list(dataset.name="Example",
-                        dim.1stLvlSom=20,
-                        dim.2ndLvlSom=20,
-                        geneset.analysis=TRUE))
+                        dim.1stLvlSom=20))
 
 env$indata <- matrix(runif(1000), 100, 10)
 

@@ -3,8 +3,9 @@ opossom.new <- function(preferences=NULL)
 {
   # Init the environment
   env <- new.env()
+  env$color.palette.portraits <- NULL
+  env$color.palette.heatmaps <- NULL
   env$t.ensID.m <- NULL
-  env$colramp <- NULL
   env$Fdr.g.m <- NULL
   env$fdr.g.m <- NULL
   env$files.name <- NULL
@@ -18,7 +19,6 @@ opossom.new <- function(preferences=NULL)
   env$group.silhouette.coef <- NULL
   env$group.colors <- NULL
   env$group.labels <- NULL
-  env$group.metadata <- NULL
   env$gs.def.list <- NULL
   env$samples.GSZ.scores <- NULL
   env$spot.list.correlation <- NULL
@@ -31,12 +31,11 @@ opossom.new <- function(preferences=NULL)
   env$indata <- NULL
   env$indata.gene.mean <- NULL
   env$indata.sample.mean <- NULL
-  env$loglog.group.metadata <- NULL
-  env$loglog.metadata <- NULL
   env$metadata <- NULL
   env$metagene.filter.list <- NULL
   env$n.0.m <- NULL
   env$output.paths <- NULL
+  env$pat.labels <- NULL
   env$p.g.m <- NULL
   env$p.m <- NULL
   env$perc.DE.m <- NULL
@@ -49,8 +48,6 @@ opossom.new <- function(preferences=NULL)
   env$groupwise.group.colors <- NULL
   env$unique.protein.ids <- NULL
   env$WAD.g.m <- NULL
-  env$WAD.group.metadata <- NULL
-  env$WAD.metadata <- NULL
 
   # Generate some additional letters
   env$LETTERS <- c(LETTERS, as.vector(sapply(1:10, function(x) {
@@ -63,7 +60,7 @@ opossom.new <- function(preferences=NULL)
 
   # Set default preferences
   env$preferences <- list(dataset.name = "Unnamed",
-                          dim.1stLvlSom = 20,
+                          dim.1stLvlSom = "auto",
                           dim.2ndLvlSom = 20,
                           training.extension = 1,
                           rotate.SOM.portraits = 0,
@@ -72,15 +69,15 @@ opossom.new <- function(preferences=NULL)
                           database.id.type = "",
                           geneset.analysis = TRUE,
                           geneset.analysis.exact = FALSE,
-                          geneset.analysis.samplespots = FALSE,
-                          spot.threshold.samples = 0.65,
+                          standard.spot.modules = "dmap",
                           spot.coresize.modules = 3,
                           spot.threshold.modules = 0.95,
                           spot.coresize.groupmap = 5,
                           spot.threshold.groupmap = 0.75,
+                          adjust.autogroup.number = 0,
                           feature.centralization = TRUE,
                           sample.quantile.normalization = TRUE,
-                          pairwise.comparison.list = list())
+                          pairwise.comparison.list = NULL)
 
   # Merge user supplied information
   if (!is.null(preferences))
@@ -113,9 +110,7 @@ opossom.run <- function(env)
 
   # Output some info
   util.info("Started:", env$preferences$started)
-  util.info("Setting:", env$preferences$dataset.name)
-  util.info("1SOM Dim:", env$preferences$dim.1stLvlSom)
-  util.info("2SOM Dim:", env$preferences$dim.2ndLvlSom)
+  util.info("Name:", env$preferences$dataset.name)
 
   # Dump frames on error
   error.option <- getOption("error")
@@ -137,12 +132,16 @@ opossom.run <- function(env)
   util.info("Detecting Spots")
   util.call(pipeline.detectSpotsSamples, env)
   util.call(pipeline.detectSpotsIntegral, env)
+  util.call(pipeline.patAssignment, env)
   util.call(pipeline.groupAssignment, env)
 
-  util.info("Plotting Sample Portraits")
-  util.call(pipeline.sampleExpressionPortraits, env)
-  util.call(pipeline.sampleRankMaps, env)
-
+  if(ncol(env$indata) < 1000)
+  {
+    util.info("Plotting Sample Portraits")
+    util.call(pipeline.sampleExpressionPortraits, env)
+    util.call(pipeline.sampleRankMaps, env)
+  }
+  
   util.info("Processing Supporting Information")
   util.call(pipeline.supportingMaps, env)
   util.call(pipeline.entropyProfiles, env)
@@ -178,12 +177,15 @@ opossom.run <- function(env)
     util.call(pipeline.chromosomeExpressionReports, env)
   }
 
-  util.info("Processing Gene Lists")
-  util.call(pipeline.geneLists, env)
+  if(ncol(env$indata) < 1000)
+  {
+    util.info("Processing Gene Lists")
+    util.call(pipeline.geneLists, env)
 
-  util.info("Processing Summary Sheets (Samples)")
-  util.call(pipeline.summarySheetsSamples, env)
-
+    util.info("Processing Summary Sheets (Samples)")
+    util.call(pipeline.summarySheetsSamples, env)
+  }
+  
   util.info("Processing Summary Sheets (Spots)")
   util.call(pipeline.summarySheetsIntegral, env)
 
@@ -197,7 +199,8 @@ opossom.run <- function(env)
 
   util.info("Generating HTML Report")
   util.call(pipeline.htmlSummary, env)
-  util.call(pipeline.htmlSampleSummary, env)
+  if(ncol(env$indata) < 1000)
+    util.call(pipeline.htmlSampleSummary, env)
   util.call(pipeline.htmlIntegralSummary, env)
   util.call(pipeline.htmlGenesetAnalysis, env)
 
@@ -212,15 +215,15 @@ opossom.run <- function(env)
   }
 
   # Run additional functions. (NOTE: They alter the environment)
+  util.call(pipeline.summarySheetsPATs, env)
+  
+  load(filename) # Reload env
   util.call(pipeline.groupAnalysis, env)
   util.call(pipeline.htmlGroupSummary, env)
 
   load(filename) # Reload env
   util.call(pipeline.differenceAnalyses, env)
   util.call(pipeline.htmlDifferencesSummary, env)
-
-  load(filename) # Reload env
-  util.call(pipeline.signatureSets, env)
 
   # Restore old error behaviour
   options(error=error.option)

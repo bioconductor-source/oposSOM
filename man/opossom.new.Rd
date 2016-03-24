@@ -15,9 +15,9 @@
 
     \itemize{
       \item{indata}: input data matrix containing the expression values or an \code{Biobase::ExpressionSet} object (see 'Details' and 'Examples')
-      \item{group.labels}: sample assignment to a distinct group, subtype or class (character; one label for each sample; may be given with \code{indata ExpressionSet})
+      \item{group.labels}: sample assignment to a distinct group, subtype or class (character; "auto" or one label for each sample; may be given with \code{indata ExpressionSet})
       \item{group.colors}: colors of the samples for diverse visualizations (character; one color for each sample; may be given with \code{indata ExpressionSet})
-      \item{dim.1stLvlSom}: dimension of primary SOM (integer, >5)
+      \item{dim.1stLvlSom}: dimension of primary SOM; use "auto" to apply automatic size estimation (integer, >5)
       \item{dim.2ndLvlSom}: dimensions of second level SOM (integer, >5)
       \item{training.extension}: factor to extend the number of iterations in SOM training (numerical, >0)
       \item{rotate.SOM.portraits}: number of roations of the primary SOM in counter-clockwise fashion (integer \{0,1,2,3\})
@@ -26,15 +26,14 @@
       \item{database.id.type}: type of rowname identifier in biomaRt database; obsolete if \code{database.dataset="auto"} (character)
       \item{geneset.analysis}: perform geneset analysis (boolean)
       \item{geneset.analysis.exact}: enables p-value and fdr calculation in geneset analysis; obsolete if \code{geneset.analysis=F} (boolean)
-      \item{max.parallel.cores}: number of CPU cores used by parallelization (numerical, >0)
-      \item{spot.threshold.samples}: spot detection threshold in single sample portraits (numerical, between 0 and 1)
-      \item{spot.coresize.modules}: spot detection in summary maps , minimum size (numerical, >0)
+      \item{standard.spot.modules}: spot modules utilized in diverse downstream analyses (character, one of \{"overexpression", "group.overexpression", "underexpression", "kmeans", "correlation", "dmap"\})
+      \item{spot.coresize.modules}: spot detection in summary maps, minimum size (numerical, >0)
       \item{spot.threshold.modules}: spot detection in summary maps, expression threshold (numerical, between 0 and 1)
       \item{spot.coresize.groupmap}: spot detection in group-specific summary maps , minimum size (numerical, >0)
       \item{spot.threshold.groupmap}: spot detection in group-specific summary maps, expression threshold (numerical, between 0 and 1)
       \item{feature.centralization}: enables centralization of the features (boolean)
       \item{sample.quantile.normalization}: enables quantile normalization of the samples (boolean)
-      \item{pairwise.comparison.list}: group list for pairwise analyses (list of group lists, see 'Examples')
+      \item{pairwise.comparison.list}: group list for pairwise analyses (list of group lists, see 'Examples') or NULL otherwise
     }
   }
 }
@@ -46,14 +45,9 @@ Please check the vignette for more details on the parameters.
 \value{
   A new oposSOM environment which is passed to \code{opossom.run}.
 }
-\author{
-Author: Henry Loeffler-Wirth <wirth@izbi.uni-leipzig.de>
-
-Maintainer: Martin Kalcher <mkalcher@porkbox.net>
-}
 \examples{
 env <- opossom.new(list(dataset.name="Example",
-                        dim.1stLvlSom=10,
+                        dim.1stLvlSom="auto",
                         dim.2ndLvlSom=10,
                         training.extension=1,
                         rotate.SOM.portraits=0,
@@ -61,8 +55,7 @@ env <- opossom.new(list(dataset.name="Example",
                         database.dataset="auto",
                         geneset.analysis=TRUE,
                         geneset.analysis.exact=TRUE,
-                        max.parallel.cores=2,
-                        spot.threshold.samples=0.9,
+                        standard.spot.modules="dmap",
                         spot.coresize.modules=4,
                         spot.threshold.modules=0.9,
                         spot.coresize.groupmap=4,

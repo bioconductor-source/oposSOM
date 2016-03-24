@@ -25,19 +25,6 @@ pipeline.genesetStatisticSamples <- function()
 
       scores <- GeneSet.GSZ(spot.gene.ids, all.gene.statistic, gs.null.list)
 
-      if (preferences$geneset.analysis.samplespots)
-      {
-        for (spot.i in seq_along(spot.list.samples[[m]]$spots))
-        {
-          spot.genes <- spot.list.samples[[m]]$spots[[spot.i]]$genes
-          spot.gene.ids <- unique(na.omit(gene.ids[spot.genes]))
-          all.gene.statistic <- t.ensID.m[, m]
-  
-          scores <-
-            c(scores, GeneSet.GSZ(spot.gene.ids, all.gene.statistic, gs.null.list))
-        }
-      }
-  
       return(scores)
     })
 
@@ -63,41 +50,10 @@ pipeline.genesetStatisticSamples <- function()
        names(x$GSZ.p.value) <- names(x$GSZ.score)
     }
 
-    if (preferences$geneset.analysis.samplespots)
-    {
-      for (spot.i in seq_along(x$spots))
-      {
-        spot.genes <- x$spots[[spot.i]]$genes
-        spot.gene.ids <- unique(na.omit(gene.ids[spot.genes]))
-
-        if (length(spot.gene.ids) > 0)
-        {
-          x$spots[[spot.i]]$GSZ.score <-
-            GeneSet.GSZ(spot.gene.ids, all.gene.statistic, gs.def.list, sort=FALSE)
-
-          x$spots[[spot.i]]$Fisher.p <-
-            GeneSet.Fisher(spot.gene.ids, unique.protein.ids, gs.def.list, sort=TRUE)
-        } else
-        {
-          x$spots[[spot.i]]$GSZ.score <- rep(0, length(gs.def.list))
-          names(x$spots[[spot.i]]$GSZ.score) <- names(gs.def.list)
-          x$spots[[spot.i]]$Fisher.p <- rep(1, length(gs.def.list))
-          names(x$spots[[spot.i]]$Fisher.p) <- names(gs.def.list)
-        }
-
-        if (preferences$geneset.analysis.exact)
-        {
-          x$spots[[spot.i]]$GSZ.p.value <-
-            1 - null.culdensity(abs(x$spots[[spot.i]]$GSZ.score))
-
-          names(x$spots[[spot.i]]$GSZ.p.value) <- names(x$spots[[spot.i]]$GSZ.score)
-        }
-      }
-    }
-
     return(x)
   })
-
+  names(spot.list.samples) <<- colnames(indata)
+  
   progress.current <- progress.max * 0.9
   util.progress(progress.current, progress.max)
 
@@ -108,7 +64,7 @@ pipeline.genesetStatisticSamples <- function()
   }))
 
   ### CSV output ###
-  filename <- file.path(paste(files.name, "- Results"), "CSV Sheets", "Sample GSZ scores.csv")
+  filename <- file.path( output.paths["CSV"], "Sample GSZ scores.csv")
   util.info("Writing:", filename)
   write.csv2(samples.GSZ.scores, filename)
 }

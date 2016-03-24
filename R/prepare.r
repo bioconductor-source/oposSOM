@@ -7,10 +7,10 @@ pipeline.prepare <- function()
     preferences$dataset.name <<- "Unnamed"
   }
 
-  if (!is.numeric(preferences$dim.1stLvlSom) || preferences$dim.1stLvlSom < 1)
+  if ( preferences$dim.1stLvlSom!="auto" && !is.numeric(preferences$dim.1stLvlSom) || preferences$dim.1stLvlSom < 1)
   {
-    util.warn("Invalid value of \"dim.1stLvlSom\". Using 20")
-    preferences$dim.1stLvlSom <<- 20
+    util.warn("Invalid value of \"dim.1stLvlSom\". Using size recommendation")
+    preferences$dim.1stLvlSom <<- "auto"
   }
 
   if (!is.numeric(preferences$dim.2ndLvlSom) || preferences$dim.2ndLvlSom < 1)
@@ -59,26 +59,19 @@ pipeline.prepare <- function()
     preferences$geneset.analysis <<- TRUE
   }
 
-  if (!is.logical(preferences$geneset.analysis.samplespots))
-  {
-    util.warn("Invalid value of \"geneset.analysis.samplespots\". Using FALSE")
-    preferences$geneset.analysis.samplespots<<- FALSE
-  }
-
   if (!is.logical(preferences$geneset.analysis.exact))
   {
     util.warn("Invalid value of \"geneset.analysis.exact\". Using FALSE")
     preferences$geneset.analysis.exact <<- FALSE
   }
-
-  if (!is.numeric(preferences$spot.threshold.samples) ||
-      preferences$spot.threshold.samples <= 0 ||
-      preferences$spot.threshold.samples >= 1)
+  
+  if (!is.character(preferences$standard.spot.modules) || length(preferences$standard.spot.modules)!=1 ||
+      !preferences$standard.spot.modules %in% c("overexpression","underexpression","kmeans","correlation","group.overexpression","dmap") )
   {
-    util.warn("Invalid value of \"spot.threshold.samples\". Using 0.65")
-    preferences$spot.threshold.samples <<- 0.65
+    util.warn("Invalid value of \"standard.spot.modules\". Using \"dmap\"")
+    preferences$standard.spot.modules <<- "dmap"
   }
-
+  
   if (!is.numeric(preferences$spot.coresize.modules) ||
       preferences$spot.coresize.modules < 1 ||
       preferences$spot.coresize.modules > 20)
@@ -140,6 +133,12 @@ pipeline.prepare <- function()
       util.warn("Empty sample set found and removed from \"pairwise.comparison.list\".")
       preferences$pairwise.comparison.list <<- preferences$pairwise.comparison.list[-empty.sets] 
     }
+    
+    if (is.null(names(preferences$pairwise.comparison.list)) )
+    {
+      names(preferences$pairwise.comparison.list) <<- sapply(preferences$pairwise.comparison.list,function(x) paste(names(x), collapse=" vs ") )
+    }
+    names(preferences$pairwise.comparison.list)[which(names(preferences$pairwise.comparison.list)=="")] <<- 1:sum(names(preferences$pairwise.comparison.list)=="")   
   }
   
   
@@ -173,6 +172,12 @@ pipeline.prepare <- function()
     storage.mode(indata) <<- "numeric"
   }
 
+  if( length(group.labels)==1 && group.labels=="auto" )
+  {
+    group.labels <<- rep("auto",ncol(indata)) 
+    names(group.labels) <<- colnames(indata)
+  }
+  
   const.cols <- which(apply(indata, 2, function(col) { diff(range(col)) == 0 }))
 
   if (length(const.cols) > 0)
@@ -218,6 +223,16 @@ pipeline.prepare <- function()
     util.warn("Removed NAs or infinite values from data set")
   }
 
+  if (preferences$dim.1stLvlSom == "auto")
+  {
+    n.sample.interval <- cut( ncol(indata), breaks=c(0,100,500,1000,5000,Inf), labels=c(1:5) )
+    n.feature.interval <- cut( nrow(indata), breaks=c(0,1000,10000,Inf), labels=c(1:3) )
+    recommendation <- matrix(c(seq(20,40,5),seq(30,50,5),seq(40,60,5)),nrow=3,byrow=TRUE)
+    
+    preferences$dim.1stLvlSom <<- recommendation[n.feature.interval,n.sample.interval]
+    util.info("Recommended SOM size will be used:",preferences$dim.1stLvlSom,"x",preferences$dim.1stLvlSom) 
+  }
+  
   ## set up global variables
 
   files.name <<- preferences$dataset.name
@@ -236,11 +251,33 @@ pipeline.prepare <- function()
   dir.create(paste(files.name, "- Results"), showWarnings=FALSE)
   dir.create(paste(files.name, "- Results/CSV Sheets"), showWarnings=FALSE)
 
-  if (is.null(colramp)) {
-    colramp <<- colorRampPalette(c("darkblue", "blue", "lightblue", "green2",
-                                   "yellow", "red", "darkred"))
+
+  # set color schemes
+  if (!is.null(color.palette.portraits)) # check if given color palette is a valid function
+  {
+    if( length(environment(color.palette.portraits))!=3 || !all( c("colors","ramp") %in% ls(environment(color.palette.portraits)) ) )
+    {
+      util.warn("Invalid value of \"color.palette.portraits\". Using standard scheme")
+      color.palette.portraits <<- colorRampPalette(c("darkblue","blue","lightblue","green2","yellow","red","darkred"))
+    }
+  } else
+  {
+    color.palette.portraits <<- colorRampPalette(c("darkblue","blue","lightblue","green2","yellow","red","darkred"))
+  }
+  
+  if (!is.null(color.palette.heatmaps)) # check if given color palette is a valid function
+  {
+    if( length(environment(color.palette.heatmaps))!=3 || !all( c("colors","ramp") %in% ls(environment(color.palette.heatmaps)) ) )
+    {
+      util.warn("Invalid value of \"color.palette.heatmaps\". Using standard scheme")
+      color.palette.heatmaps <<- colorRampPalette(c("blue4","blue","gray90","orange","red4"))
+    }
+  } else
+  {
+    color.palette.heatmaps <<- colorRampPalette(c("blue4","blue","gray90","orange","red4"))
   }
 
+  # check group.labels and group.colors
   if ((!is.null(group.labels) && length(group.labels) != ncol(indata)) ||
       (!is.null(group.colors) && length(group.colors) != ncol(indata)))
   {
@@ -282,7 +319,7 @@ pipeline.prepare <- function()
       for (i in seq_along(unique(group.labels)))
       {
         group.colors[which(group.labels == unique(group.labels)[i])] <<-
-          colorRampPalette(c("blue3", "blue", "lightblue", "green", "gold", "red", "red3"))(length(unique(group.labels)))[i]
+          colorRampPalette(c("blue3", "blue", "lightblue", "green2", "gold", "red", "red3"))(length(unique(group.labels)))[i]
       }
     }
 
@@ -297,7 +334,7 @@ pipeline.prepare <- function()
     group.labels <<- rep("sample", ncol(indata))
     names(group.labels) <<- colnames(indata)
 
-    group.colors <<- colramp(ncol(indata))
+    group.colors <<- colorRampPalette(c("blue3", "blue", "lightblue", "green2", "gold", "red", "red3"))(ncol(indata))
     names(group.colors) <<- colnames(indata)
   }
 
@@ -326,13 +363,13 @@ pipeline.prepare <- function()
     indata <<- indata - indata.gene.mean
   }
 
-  util.info("Load Annotation Data")
+  util.info("Loading gene annotation data. This may take several minutes until next notification.")
   util.call(pipeline.prepareAnnotation, environment())
 
 
   ## SOM
   util.info("Processing SOM. This may take several time until next notification.")
-
+  
   som.result <<- som.init(indata, xdim=preferences$dim.1stLvlSom, ydim=preferences$dim.1stLvlSom, init="linear")
 
   # Rotate/Flip First lvl SOMs
@@ -368,7 +405,7 @@ pipeline.prepare <- function()
                              inv.alp.c=nrow(indata)*2*preferences$training.extension/100)
   })
 
-  util.info("Remaining ~", ceiling(5*t1[3]/60), "min ~", round(5*t1[3]/3600,1),"h")
+  util.info("Remaining time for SOM training: ~", ceiling(5*t1[3]/60), "min = ~", round(5*t1[3]/3600,1),"h")
 
   som.result <<- som.train(indata, som.result$code, xdim=preferences$dim.1stLvlSom,
                            ydim=preferences$dim.1stLvlSom, alpha=0.02,
@@ -379,32 +416,8 @@ pipeline.prepare <- function()
   metadata <<- som.result$code
   colnames(metadata) <<- colnames(indata)
 
-  som.result$code <<- NA
-
-  loglog.metadata <<- apply(metadata, 2, function(x)
-  {
-    meta.sign <- sign(x)
-    meta <- log10(abs(x))
-    meta <- meta - min(meta, na.rm=TRUE)
-    return(meta * meta.sign)
-  })
-
-  WAD.metadata <<- apply(metadata ,2, function(x) { x * ((x - min(x)) / (max(x) - min(x))) })
-
-
-  ##  Group SOMs
-
-  if (length(unique(group.labels)) > 1) # mean group metagenes
-  {
-    group.metadata <<-
-      do.call(cbind, by(t(metadata), group.labels, colMeans))[,unique(group.labels)]
-
-    loglog.group.metadata <<-
-      do.call(cbind, by(t(loglog.metadata), group.labels, colMeans))[,unique(group.labels)]
-
-    WAD.group.metadata <<-
-      do.call(cbind, by(t(WAD.metadata), group.labels, colMeans))[,unique(group.labels)]
-  }
+  som.result$data <<- NULL
+  som.result$code <<- NULL
 
 
   ## set up SOM dependent variables
@@ -414,5 +427,19 @@ pipeline.prepare <- function()
   som.nodes <<- (som.result$visual[,"x"] + 1) + som.result$visual[,"y"] * preferences$dim.1stLvlSom
   names(som.nodes) <<- rownames(indata)
 
+  
+  ## gene localization table
+  o <- order(som.nodes)
+  out <- data.frame(ID=rownames(indata)[o],
+                    Symbol=gene.names[o],
+                    MeanExpression=indata.gene.mean[o],
+                    Metagene=gene.coordinates[o],
+                    Chromosome=gene.positions[rownames(indata)[o]],
+                    Description=gene.descriptions[o])
+  
+  filename <- file.path(paste(files.name, "- Results"), "CSV Sheets", "Gene localization.csv")
+  util.info("Writing:", filename)
+  write.csv2(out, filename, row.names=FALSE)
+  
   return(TRUE)
 }

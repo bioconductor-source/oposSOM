@@ -1,7 +1,5 @@
 pipeline.htmlSampleSummary <- function()
 {
-  if(ncol(metadata) > 1000) return()
-  
   filename <- file.path(paste(files.name, "- Results"),
                         "Summary Sheets - Samples",
                         "0verview.html")
@@ -111,8 +109,6 @@ pipeline.htmlSampleSummary <- function()
         genes for the whole sample, the ranked list of over- and underexpressed
         gene sets after GSZ-overexpression analysis and the respective p-value
         distributions.
-        The local summary sheets present the analogous information for each
-        single spot detected.
         The gene and gene set list are provided as tables.
       </p>
 
@@ -123,7 +119,6 @@ pipeline.htmlSampleSummary <- function()
             <th>Group</th>
             <th>Summary Sheet</th>
             <th>Global Gene List</th>
-            <th>Local Gene List</th>
             <th>Gene Set List</th>
           </tr>
         </thead>
@@ -147,18 +142,6 @@ pipeline.htmlSampleSummary <- function()
               <a href=\"../CSV Sheets/Gene Lists - Global/", fname, ".csv\" >
                 CSV
               </a>
-            </td>
-            <td>", sep="", file=outfile)
-
-    for (spot.i in seq_along(spot.list.samples[[m]]$spots))
-    {
-      cat("
-              <a href=\"../CSV Sheets/Gene Lists - Local/", fname, ".", spot.i, ".csv\">
-                CSV ", spot.i, "
-              </a>", sep="", file=outfile)
-    }
-
-    cat("
             </td>
             <td>
               <a href=\"../CSV Sheets/Gene Set Lists - Global/", fname, ".csv\" target=\"_blank\">

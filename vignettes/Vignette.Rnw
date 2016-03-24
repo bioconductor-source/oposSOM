@@ -96,9 +96,9 @@ env$indata <- opossom.tissues.eset
 
 
 \ \\
-Each sample may be assigned to a distinct group and a respective color to
-improve data visualization and result presentations. If not defined by the
-user, the samples will be collected within one group and colored using a
+Each sample may be assigned to a distinct group and a corresponding color to
+improve data visualization and result presentations. \textit{group.labels} can also be set to \textit{"auto"} to apply unsupervised grouping of samples according to their expression module activation patterns.
+Otherwise, samples will be collected within one group and colored using a
 standard scheme.
 
 <<>>=
@@ -238,10 +238,10 @@ respective analysis:
 
 \begin{itemize}
 	\item \textit{dataset.name} (character): name of the dataset. Used to name
-    results folder and environment image (default:'Unnamed').
+    results folder and environment image (default: "Unnamed").
 	\item \textit{dim.1stLvlSom} (integer): dimension of primary SOM
-    (default: 20). Given as a single value defining the size of the square
-    SOM grid.
+    (default: "auto"). Given as a single value defining the size of the square
+    SOM grid. Use "auto" to set SOM size to recommendation (see below).
 	\item \textit{feature.centralization} (boolean): enables or disables
     centralization of the features (default: TRUE).
 	\item \textit{sample.quantile.normalization} (boolean): enables quantile
@@ -283,9 +283,7 @@ The parameters below are secondary and may be left unattended by the user:
     and fdr calculation in geneset analysis (default: TRUE). Obsolete if
     \textit{geneset.analysis=F}.\\
 
-	\item \textit{spot.threshold.samples} (numerical, between 0 and 1):
-    expression threshold for the spot regions in single sample portraits
-    (default: 0.65).
+	\item \textit{standard.spot.modules} (character, one of \{"overexpression", "underexpression", "kmeans", "correlation", "group.overexpression", "dmap"\}): spot modules utilized in diverse downstream analyses and visualizations, e.g. PAT detection and module correlation map (default: "dmap").
 	\item \textit{spot.threshold.modules} (numerical, between 0 and 1): spot
     detection in summary maps, expression threshold (default: 0.95).
 	\item \textit{spot.coresize.modules} (integer, >0): spot detection in summary
@@ -297,22 +295,36 @@ The parameters below are secondary and may be left unattended by the user:
     group-specific summary maps, minimum spot size (default: 5).\\
 
 	\item \textit{pairwise.comparison.list} (list of group lists): group list
-    for pairwise analyses (default: empty list). Each element is a list of
+    for pairwise analyses (default: NULL). Each element is a list of
     two character vectors containing the sample names to be analysed in
     pairwise comparison. The sample names must be contained in the column names
     of the input data matrix. For example, the following setting will compare
     the homeostasis (liver, kidney) to the nervous system samples
-    (accumbens, cortex), and also tongue to the nervous system:
+    (accumbens, cortex), and also tongue and intestine to the nervous system:
 
 <<>>=
 env$preferences$pairwise.comparison.list <-
     list(list(c("liver","kidney cortex"),
               c("accumbens","cerebral cortex")),
-         list(c("tongue"),
+         list(c("tongue","small intestine"),
               c("accumbens","cerebral cortex")))
 @
 
 \end{itemize}
+
+\pagebreak
+\section{Recommended SOM size and runtime estimation}
+
+The size of the SOM required to resolve main expression modules depends on both the number of features (e.g. genes measured) and the number of samples. Here we give a recommendation based on previous analyses of a multitude of different data sets (see Figure ~\ref{fig:Size recommendation}). Addionally, we give a rough estimation for runtime of the SOM training algorithm.
+
+\begin{figure}[h!]
+	\begin{center}
+	\includegraphics[width=1.0\textwidth]{SizeRecommendation.pdf}
+	\end{center}
+	\caption{Recommended size of the SOM and estimated runtime of the SOM training on an Intel Core i7 system (16GB RAM).}
+	\label{fig:Size recommendation}
+\end{figure}
+
 
 
 \pagebreak
