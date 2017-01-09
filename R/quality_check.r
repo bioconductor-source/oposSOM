@@ -1,6 +1,6 @@
 pipeline.qualityCheck <- function()
 {
-  dir.create(output.paths["LPE"], showWarnings=FALSE)
+  dir.create(paste(files.name, "- Results/Data Overview"), showWarnings=FALSE)
 
   plot.poly.density = function(subset=1:ncol(indata), col="#BEBEBE", main="", add=FALSE)
   {
@@ -23,10 +23,11 @@ pipeline.qualityCheck <- function()
   densities.y = t(sapply(densities, function(x) x$y))
   densities.x = densities[[1]]$x
 
-  pdf(paste(output.paths["LPE"],"/data distribution.pdf", sep=""), 29.7/2.54, 21/2.54)
+  filename <- file.path(paste(files.name, "- Results"), "Data Overview", "Data Distribution.pdf")
+  util.info("Writing:", filename)
+  pdf(filename, 29.7/2.54, 21/2.54)
 
   par(mfrow=c(1,2))
-
   plot(densities.x, densities.y[1,], main="Input data distribution", xlim=range(indata), ylim=range(densities.y), type="l", xlab="log Expression", ylab="Density")
     dummy=sapply(densities, lines)
 
@@ -39,6 +40,7 @@ pipeline.qualityCheck <- function()
 
 	
 	indata.sample.sd <- apply(indata, 2, sd)
+	indata.sample.mean <- colMeans(indata)
 
 	Q13 <- quantile( indata.sample.mean, c(0.25,0.75) )
 	IQR1.mean <- c( Q13[1] - 1*diff( Q13 ), Q13[2] + 1*diff( Q13 ) )
@@ -59,7 +61,7 @@ pipeline.qualityCheck <- function()
 		abline( h=IQR1.sd, col="gray20", lty=2 )
 		abline( h=IQR3.sd, col="gray20", lty=3 )
 		legend("topright",c("1x IQR","3x IQR"),lty=c(2,3),col="gray20")
-	if(length(outlier)>0) text(indata.sample.mean[outlier],indata.sample.sd[outlier]+diff(range(indata.sample.sd))*0.01,outlier)
+	if(length(outlier)>0) text(indata.sample.mean[outlier],indata.sample.sd[outlier]+diff(range(indata.sample.sd))*0.017,outlier)
 		
 		
   par(mfrow=c(2,1),mar=c(5,3,3,2))
@@ -89,7 +91,6 @@ pipeline.qualityCheck <- function()
     boxplot(mean.boxes, col=groupwise.group.colors, las=2, main="", cex.main=1, cex.axis=0.8, xaxt="n")
     axis(1, seq_along(groupwise.group.colors), unique(group.labels), las=2, cex.axis=0.8)
   }
-
   
   
   environment(pipeline.affymetrixQualityCheck) <- environment()

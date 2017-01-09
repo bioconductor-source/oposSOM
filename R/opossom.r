@@ -9,13 +9,8 @@ opossom.new <- function(preferences=NULL)
   env$Fdr.g.m <- NULL
   env$fdr.g.m <- NULL
   env$files.name <- NULL
-  env$gene.descriptions <- NULL
-  env$gene.ids <- NULL
-  env$gene.names <- NULL
-  env$gene.positions <- NULL
-  env$gene.positions.list <- NULL
-  env$gene.positions.table <- NULL
-  env$gene.coordinates <- NULL
+  env$gene.info <- NULL
+  env$chromosome.list <- NULL
   env$group.silhouette.coef <- NULL
   env$group.colors <- NULL
   env$group.labels <- NULL
@@ -32,17 +27,13 @@ opossom.new <- function(preferences=NULL)
   env$indata.gene.mean <- NULL
   env$indata.sample.mean <- NULL
   env$metadata <- NULL
-  env$metagene.filter.list <- NULL
   env$n.0.m <- NULL
   env$output.paths <- NULL
   env$pat.labels <- NULL
   env$p.g.m <- NULL
   env$p.m <- NULL
   env$perc.DE.m <- NULL
-  env$som.nodes <- NULL
   env$som.result <- NULL
-  env$secLvlSom.20.20 <- NULL
-  env$secLvlSom.custom <- NULL
   env$t.g.m <- NULL
   env$t.m <- NULL
   env$groupwise.group.colors <- NULL
@@ -65,10 +56,17 @@ opossom.new <- function(preferences=NULL)
                           training.extension = 1,
                           rotate.SOM.portraits = 0,
                           flip.SOM.portraits = FALSE,
+                          activated.modules = list( "reporting" = TRUE,
+                                                    "primary.analysis" = TRUE, 
+                                                    "sample.similarity.analysis" = TRUE,
+                                                    "geneset.analysis" = TRUE, 
+                                                    "geneset.analysis.exact" = FALSE,
+                                                    "group.analysis" = TRUE,
+                                                    "difference.analysis" = TRUE ),
+                          database.biomart = "ENSEMBL_MART_ENSEMBL",
+                          database.host = "www.ensembl.org",
                           database.dataset = "auto",
                           database.id.type = "",
-                          geneset.analysis = TRUE,
-                          geneset.analysis.exact = FALSE,
                           standard.spot.modules = "dmap",
                           spot.coresize.modules = 3,
                           spot.threshold.modules = 0.95,
@@ -104,129 +102,159 @@ opossom.new <- function(preferences=NULL)
 # Executes the oposSOM pipeline.
 opossom.run <- function(env)
 {
-  env$preferences$system.info <- Sys.info()
-  env$preferences$session.info <- sessionInfo()
-  env$preferences$started <- format(Sys.time(), "%a %d %b %Y %X")
-
-  # Output some info
   util.info("Started:", env$preferences$started)
   util.info("Name:", env$preferences$dataset.name)
 
-  # Dump frames on error
-  error.option <- getOption("error")
-  options(error=quote({dump.frames(to.file=TRUE)}))
-
-  # Prepare the environment
-  if (!util.call(pipeline.prepare, env)) {
+  #### Preparation & Calculation part ####
+  
+  if (!util.call(pipeline.checkInputParameters, env)) {
     return()
   }
-
-  imagename <- paste(env$files.name, "pre.RData")
-  util.info("Saving environment image:", imagename)
-  save(env, file=imagename)
-
-  # Execute the pipeline
-  util.info("Processing Differential Expression")
-  util.call(pipeline.calcStatistics, env)
-
-  util.info("Detecting Spots")
-  util.call(pipeline.detectSpotsSamples, env)
-  util.call(pipeline.detectSpotsIntegral, env)
-  util.call(pipeline.patAssignment, env)
-  util.call(pipeline.groupAssignment, env)
-
-  if(ncol(env$indata) < 1000)
+  
+  if(env$preferences$activated.modules$primary.analysis)
   {
-    util.info("Plotting Sample Portraits")
-    util.call(pipeline.sampleExpressionPortraits, env)
-    util.call(pipeline.sampleRankMaps, env)
+    env$preferences$system.info <- Sys.info()
+    env$preferences$session.info <- sessionInfo()
+    env$preferences$started <- format(Sys.time(), "%a %d %b %Y %X")
   }
   
-  util.info("Processing Supporting Information")
-  util.call(pipeline.supportingMaps, env)
-  util.call(pipeline.entropyProfiles, env)
-  util.call(pipeline.topologyProfiles, env)
-
-  util.info("Processing 2nd level Metagene Analysis")
-  dir.create(file.path(paste(env$files.name, "- Results"),
-                       "2nd lvl Metagene Analysis"), showWarnings=FALSE)
-
-  util.call(pipeline.2ndLvlSimilarityAnalysis, env)
-  util.call(pipeline.2ndLvlCorrelationAnalysis, env)
-  util.call(pipeline.2ndLvlComponentAnalysis, env)
-  util.call(pipeline.2ndLvlSom, env)
-
-
-  if (env$preferences$geneset.analysis)
+  if(env$preferences$activated.modules$reporting)
   {
-    util.info("Processing Geneset Analysis")
-    dir.create(paste(env$files.name, "- Results/Geneset Analysis"),
-               showWarnings=FALSE)
+    # create output dirs
+    dir.create(paste(env$files.name, "- Results"), showWarnings=FALSE)
+    dir.create(paste(env$files.name, "- Results/CSV Sheets"), showWarnings=FALSE)
 
+    if(env$preferences$activated.modules$primary.analysis)
+    {
+      util.call(pipeline.qualityCheck, env)
+    } 
+  }
+
+  if(env$preferences$activated.modules$primary.analysis || env$preferences$activated.modules$geneset.analysis)
+  {
+    util.info("Loading gene annotation data. This may take several minutes until next notification.")
+    util.call(pipeline.prepareAnnotation, env)
+  }
+
+  if(env$preferences$activated.modules$primary.analysis)
+  {
+    util.info("Processing SOM. This may take several time until next notification.")
+    util.call(pipeline.prepareIndata, env)
+    util.call(pipeline.generateSOM, env)
+    
+    filename <- paste(env$files.name, "pre.RData")
+    util.info("Saving environment image:", filename)
+    save(env, file=filename)
+    
+    util.info("Processing Differential Expression Statistics")
+    util.call(pipeline.calcStatistics, env)
+
+    util.info("Detecting Spots")
+    util.call(pipeline.detectSpotsSamples, env)
+    util.call(pipeline.detectSpotsIntegral, env)
+    util.call(pipeline.patAssignment, env)
+    util.call(pipeline.groupAssignment, env)    
+  }
+
+  if (env$preferences$activated.modules$geneset.analysis)
+  {
+    util.info("Calculating Geneset Enrichment")
     util.call(pipeline.genesetStatisticSamples, env)
     util.call(pipeline.genesetStatisticIntegral, env)
-    util.call(pipeline.genesetOverviews, env)
-
-    util.info("Processing Geneset Profiles and Maps")
-    util.call(pipeline.genesetProfilesAndMaps, env)
-
-    util.info("Processing Cancer Hallmarks")
-    util.call(pipeline.cancerHallmarks, env)
-
-    util.info("Processing Chromosome Expression Reports")
-    util.call(pipeline.chromosomeExpressionReports, env)
   }
-
-  if(ncol(env$indata) < 1000)
+  
+    
+  if(env$preferences$activated.modules$primary.analysis || env$preferences$activated.modules$geneset.analysis)
+  {    
+    filename <- paste(env$files.name, ".RData", sep="")
+    util.info("Saving environment image:", filename)
+    save(env, file=filename)
+    
+    if (file.exists(paste(env$files.name, "pre.RData")) && file.exists(filename))
+    {
+      file.remove(paste(env$files.name, "pre.RData"))
+    }
+  }  
+    
+  #### Reporting part ####
+  
+  if(env$preferences$activated.modules$reporting)
   {
-    util.info("Processing Gene Lists")
+  
+    util.info("Plotting Supporting Information")
+    util.call(pipeline.supportingMaps, env)
+    util.call(pipeline.entropyProfiles, env)
+    util.call(pipeline.topologyProfiles, env)
+
+    
+    if(length(env$chromosome.list) > 0)
+    {
+      util.info("Plotting Chromosome Expression Reports")
+      util.call(pipeline.chromosomeExpressionReports, env)
+    }
+    
+    if(ncol(env$indata) < 1000)
+    {
+      util.info("Plotting Sample Portraits")
+      util.call(pipeline.sampleExpressionPortraits, env)
+    } 
+    
+    if ( env$preferences$activated.modules$sample.similarity.analysis && ncol(env$indata) > 2)
+    {    
+      util.info("Plotting Sample Similarity Analysis")
+      dir.create(file.path(paste(env$files.name, "- Results"), "Sample Similarity Analysis"), showWarnings=FALSE)
+      
+      util.call(pipeline.sampleSimilarityAnalysisED, env)
+      util.call(pipeline.sampleSimilarityAnalysisCor, env)
+      util.call(pipeline.sampleSimilarityAnalysisICA, env)
+      util.call(pipeline.sampleSimilarityAnalysisSOM, env)
+    }
+    
+    if (env$preferences$activated.modules$geneset.analysis)
+    {
+      dir.create(paste(env$files.name, "- Results/Geneset Analysis"), showWarnings=FALSE)
+      
+      util.info("Plotting Geneset Enrichment Heatmaps")
+      util.call(pipeline.genesetOverviews, env)
+      
+      util.info("Plotting Geneset Profiles and Maps")
+      util.call(pipeline.genesetProfilesAndMaps, env)
+      
+      util.info("Calculating Cancer Hallmark Enrichment")
+      util.call(pipeline.cancerHallmarks, env)
+    }
+    
+    
+    util.info("Writing Gene Lists")
     util.call(pipeline.geneLists, env)
 
-    util.info("Processing Summary Sheets (Samples)")
+    util.info("Plotting Summary Sheets (Samples)")
     util.call(pipeline.summarySheetsSamples, env)
-  }
+    
+    util.info("Plotting Summary Sheets (Modules & PATs)")
+    util.call(pipeline.summarySheetsModules, env)
+    util.call(pipeline.summarySheetsPATs, env)
+      
+
+    if(env$preferences$activated.modules$group.analysis && length(unique(env$group.labels)) >= 2)
+    {
+      util.info("Processing Group-centered Analyses")
+      util.call(pipeline.groupAnalysis, env)
+    }
   
-  util.info("Processing Summary Sheets (Spots)")
-  util.call(pipeline.summarySheetsIntegral, env)
+    if(env$preferences$activated.modules$difference.analysis)
+    {
+      util.info("Processing Difference Analyses")
+      util.call(pipeline.differenceAnalyses, env)
+    }
 
-  util.info("Processing 3rd level Spot Analysis")
-  dir.create(paste(env$files.name, "- Results/3rd lvl Spot Analysis"),
-             showWarnings=FALSE)
-
-  util.call(pipeline.3rdLvlChromosomalEnrichment, env)
-  util.call(pipeline.3rdLvlSummarySheets, env)
-  util.call(pipeline.3rdLvlNetworks, env)
-
-  util.info("Generating HTML Report")
-  util.call(pipeline.htmlSummary, env)
-  if(ncol(env$indata) < 1000)
+    util.info("Generating HTML Report")
     util.call(pipeline.htmlSampleSummary, env)
-  util.call(pipeline.htmlIntegralSummary, env)
-  util.call(pipeline.htmlGenesetAnalysis, env)
-
-  # Save the opossom environment
-  filename <- paste(env$files.name, ".RData", sep="")
-  util.info("Saving environment image:", filename)
-  save(env, file=filename)
-
-  if (file.exists(imagename) && file.exists(filename))
-  {
-    file.remove(imagename)
-  }
-
-  # Run additional functions. (NOTE: They alter the environment)
-  util.call(pipeline.summarySheetsPATs, env)
-  
-  load(filename) # Reload env
-  util.call(pipeline.groupAnalysis, env)
-  util.call(pipeline.htmlGroupSummary, env)
-
-  load(filename) # Reload env
-  util.call(pipeline.differenceAnalyses, env)
-  util.call(pipeline.htmlDifferencesSummary, env)
-
-  # Restore old error behaviour
-  options(error=error.option)
-
+    util.call(pipeline.htmlModuleSummary, env)
+    util.call(pipeline.htmlGenesetAnalysis, env)  
+    util.call(pipeline.htmlSummary, env)
+    
+  }    
+    
   util.info("Finished:", format(Sys.time(), "%a %b %d %X"))
 }

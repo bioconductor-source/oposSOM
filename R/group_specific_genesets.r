@@ -37,7 +37,7 @@ pipeline.groupSpecificGenesets <- function()
 
 
       n.map <- matrix(0,preferences$dim.1stLvlSom,preferences$dim.1stLvlSom)
-      gs.nodes <- som.nodes[names(gene.ids)[which(gene.ids %in% gs.def.list[[names(top.gs)[i]]]$Genes)]]
+      gs.nodes <- som.result$nodes[names(gene.info$ids)[which(gene.info$ids %in% gs.def.list[[names(top.gs)[i]]]$Genes)]]
       n.map[as.numeric(names(table(gs.nodes)))] <- table(gs.nodes)
       n.map[which(n.map==0)] <- NA
       n.map <- matrix(n.map, preferences$dim.1stLvlSom)
@@ -62,7 +62,7 @@ pipeline.groupSpecificGenesets <- function()
     dev.off()
 
     fdr.res <- fdrtool(gs.p.values,statistic="pvalue",plot=FALSE,verbose=FALSE)
-    out <- cbind(names(gs.p.values), gs.p.values, fdr.res$lfdr)
+    out <- cbind(names(gs.p.values), paste(gs.p.values,"     ."), paste(fdr.res$lfdr,"     ."))
     colnames(out) = c("gene set","p-value","fdr")
 
     write.csv2(out, paste(files.name,
@@ -107,7 +107,7 @@ pipeline.groupSpecificGenesets <- function()
       text(label.x, ylim[2]*0.92, label.string, col=groupwise.group.colors,cex=2.5)
     
     n.map <- matrix(0,preferences$dim.1stLvlSom,preferences$dim.1stLvlSom)
-    gs.nodes <- som.nodes[names(gene.ids)[which(gene.ids %in% gs.def.list[[top.gs[i]]]$Genes)]]
+    gs.nodes <- som.result$nodes[names(gene.info$ids)[which(gene.info$ids %in% gs.def.list[[top.gs[i]]]$Genes)]]
     n.map[as.numeric(names(table(gs.nodes)))] <- table(gs.nodes)
     n.map[which(n.map==0)] <- NA
     n.map <- matrix(n.map, preferences$dim.1stLvlSom)

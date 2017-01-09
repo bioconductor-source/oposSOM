@@ -1,13 +1,15 @@
 pipeline.summarySheetsSamples <- function()
 {
+  if(ncol(indata) >= 1000) return()
+    
   dir.create(output.paths["Summary Sheets Samples"], showWarnings=FALSE)
 
   #### Summary Sheets ####
   n.genes.in.genesets <- 0
 
-  if (preferences$geneset.analysis)
+  if (preferences$activated.modules$geneset.analysis)
   {
-    n.genes.in.genesets <- length(intersect(unique(unlist(gs.def.list)), gene.ids))
+    n.genes.in.genesets <- length(intersect(unique(unlist(gs.def.list)), gene.info$ids))
   }
 
   ylim.max <- 0
@@ -84,7 +86,7 @@ pipeline.summarySheetsSamples <- function()
     par(mar=c(2,3,3,1))
 
     image(matrix(metadata[,m], preferences$dim.1stLvlSom, preferences$dim.1stLvlSom),
-          axes=FALSE, col = color.palette.portraits(1000), main="Profile", cex.main=1.5)
+          axes=FALSE, col = color.palette.portraits(1000), main="Portrait", cex.main=1.5)
 
     axis(1,
          seq(0, 1, length.out=preferences$dim.1stLvlSom/10+1),
@@ -144,8 +146,8 @@ pipeline.summarySheetsSamples <- function()
     text(x.coords[3], y.coords, round(indata[o, m], 2), cex=0.6, adj=0)
     text(x.coords[4], y.coords, format(p.g.m[o, m], digits=1), cex=0.6, adj=0)
     text(x.coords[5], y.coords, format(fdr.g.m[o, m], digits=1), cex=0.6, adj=0)
-    text(x.coords[6], y.coords, gene.coordinates[o], cex=0.6, adj=0)
-    text(x.coords[7], y.coords, gene.descriptions[o], cex=0.6, adj=0)
+    text(x.coords[6], y.coords, gene.info$coordinates[o], cex=0.6, adj=0)
+    text(x.coords[7], y.coords, gene.info$descriptions[o], cex=0.6, adj=0)
 
     par(mar=c(3,6,2,6))
 
@@ -170,7 +172,7 @@ pipeline.summarySheetsSamples <- function()
            col=c("black","gray","black","black"), lty=c(1,1,2,3),
            lwd=c(1,1,1,2), cex=0.7)
 
-    if (preferences$geneset.analysis)
+    if (preferences$activated.modules$geneset.analysis)
     {
       n.sets <- 20
 
@@ -214,7 +216,7 @@ pipeline.summarySheetsSamples <- function()
       text(x.coords[5], y.coords, sapply(gs.def.list, function(x) { x$Type })[names(top.gs.score)], cex=0.6, adj=0)
       text(x.coords[6], y.coords, names(top.gs.score), cex=0.6, adj=0)
 
-      if (preferences$geneset.analysis.exact)
+      if (preferences$activated.modules$geneset.analysis.exact)
       {
         p <- spot.list.samples[[m]]$GSZ.p.value
 

@@ -62,7 +62,7 @@ pipeline.htmlSummary <- function()
         <dt>Number of genes</dt>
         <dd>", nrow(indata), "</dd>
         <dt>ID type of genes</dt>
-        <dd>", preferences$database.id.type , "</dd>
+				<dd>", ifelse( preferences$database.id.type!="", preferences$database.id.type, "not defined" ), "</dd>
         <dt>Dimension of the SOM</dt>
         <dd>", preferences$dim.1stLvlSom, " x ", preferences$dim.1stLvlSom, "</dd>
         <dt>Date</dt>
@@ -74,16 +74,22 @@ pipeline.htmlSummary <- function()
       </dl>
 
       <h1>Results</h1>
+      <h2>General</h2>
 
       <ul>
         <li>
-          <a href=\"LPE/data distribution.pdf\" target=\"_blank\">
-            Raw Data (PDF)
+          <a href=\"Data Overview/Data Distribution.pdf\" target=\"_blank\">
+            Data Distribution (PDF)
+          </a>
+        </li>
+        <li>
+          <a href=\"Data Overview/Chromosome Expression.pdf\" target=\"_blank\">
+            Chromosome-wise gene expression heatmap (PDF)
           </a>
         </li>
       </ul>
 
-      <h2>1st Level SOM Analysis</h2>
+      <h2>SOM Analysis</h2>
 
       <p>
         These reports comprise the SOM portraits in standard and alternative
@@ -91,7 +97,8 @@ pipeline.htmlSummary <- function()
         supplementary information about the 1st level SOM.
       </p>", sep="", file=outfile)
 
-  if(ncol(indata) < 1000)
+  
+  if( file.exists(file.path(paste(files.name, "- Results"), "Expression Portraits.pdf")) )
   {
       cat("
         <ul>
@@ -103,11 +110,6 @@ pipeline.htmlSummary <- function()
           <li>
             <a href=\"Expression Portraits - alternative scales.pdf\" target=\"_blank\">
               Alternative Color Scales: absolute expression, WAD, loglogFC (PDF)
-            </a>
-          </li>
-          <li>
-            <a href=\"Rank Maps.pdf\" target=\"_blank\">
-              Rank Portraits: FC, WAD, t-score (PDF)
             </a>
           </li>
         </ul>", sep="", file=outfile)
@@ -140,8 +142,8 @@ pipeline.htmlSummary <- function()
           </a>
         </li>
       </ul>", sep="", file=outfile)
-
-  if(ncol(indata) < 1000)
+      
+  if( file.exists(file.path(paste(files.name, "- Results"), "Summary Sheets - Samples", "0verview.html")) )
   {
     cat("<h2>Sample Summaries</h2>
   
@@ -158,7 +160,7 @@ pipeline.htmlSummary <- function()
         </ul>", sep="", file=outfile)
   }
   
-  if (preferences$geneset.analysis)
+  if( file.exists(file.path(paste(files.name, "- Results"), "Geneset Analysis", "0verview.html")) )
   {
     cat("
       <h2>Geneset Enrichment Analysis</h2>
@@ -176,72 +178,114 @@ pipeline.htmlSummary <- function()
         </li>
       </ul>", sep="", file=outfile)
   }
-
-  cat("
-      <h2>2nd Level Analysis</h2>
-
-      <p>
-        Sample similarity analyses based on different metrics applied, using
-        the metadata as input.
-      </p>
-
-      <ul>
-        <li>
-          <a href=\"2nd lvl Metagene Analysis/2nd lvl SOM.pdf\" target=\"_blank\">
-            2nd Level SOM (PDF)
-          </a>
-        </li>
-        <li>
-          <a href=\"2nd lvl Metagene Analysis/Similarity Analysis.pdf\" target=\"_blank\">
-            Similarity Based Methods: Neighbor Joining, Hierarchical Clustering (PDF)
-          </a>
-        </li>
-        <li>
-          <a href=\"2nd lvl Metagene Analysis/Correlation Analysis.pdf\" target=\"_blank\">
-            Correlation Based Methods: Spanning Tree, Networks, Maps (PDF)
-          </a>
-        </li>
-        <li>
-          <a href=\"2nd lvl Metagene Analysis/Component Analysis.pdf\" target=\"_blank\">
-            Component Based Methods: 2d-ICA, 3d-ICA (PDF)
-          </a>
-        </li>
-      </ul>
-
-      <h2>3rd Level Analysis</h2>
-
-      <p>
-        Different criteria of spot module definition such as overexpression or
-        mutual correlations between the metagenes where applied.
-        The reports comprise integrated portraits, functional analyses.
-      </p>
-
-      <ul>
-        <li>
-          <a href=\"Summary Sheets - Integral/0verview.html\" target=\"_blank\">
-            Spot Reports (HTML)
-          </a>
-        </li>
-      </ul>", sep="", file=outfile)
-
-  if (length(unique(group.labels)) > 1)
-  {
+  
+      
+  if( file.exists(file.path(paste(files.name, "- Results"), "Sample Similarity Analysis")) ) 
+  {      
     cat("
-      <h2>Group Analyses</h2>
-
-      <p>
-        Analyses based on PAT-wise aggregated data, including clustering dendrogram, 
-        portraits and assotiation to the sample groups.
-      </p>
-        
+        <h2>Sample Similarity Analyses</h2>
+  
+        <p>
+          Sample similarity analyses based on expression module data and metagene data using different metrics and algorithms.<br>
+          <br>
+          Euclidean Distance base approaches:
+        </p>
+  
         <ul>
           <li>
-          <a href=\"Summary Sheets - PATs/PAT report.pdf\" target=\"_blank\">
-          PAT Report (PDF)
-          </a>
-        </li>
-      </ul>
+            <a href=\"Sample Similarity Analysis/Sample SOM.pdf\" target=\"_blank\">
+              Sample SOM (PDF)
+            </a>
+          </li>
+          <li>
+            <a href=\"Sample Similarity Analysis/t-SNE.pdf\" target=\"_blank\">
+              t-SNE dimension reduction (PDF)
+            </a>
+          </li>
+          <li>
+            <a href=\"Sample Similarity Analysis/Neighbor Joining.pdf\" target=\"_blank\">
+              Phylogenetic clustering using neighbor joining algorithm (PDF)
+            </a>
+          </li>
+          <li>
+            <a href=\"Sample Similarity Analysis/Hierarchical Clustering.pdf\" target=\"_blank\">
+              Expression heatmaps and hierarchical clustering dendrograms (PDF)
+            </a>
+          </li>
+        </ul>
+  
+        Correlation base approaches:
+  
+        <ul>
+          <li>
+            <a href=\"Sample Similarity Analysis/Correlation Spanning Tree.pdf\" target=\"_blank\">
+              Correlation spanning tree connecting all samples (PDF)
+            </a>
+          </li>
+          <li>
+            <a href=\"Sample Similarity Analysis/Correlation Backbone.pdf\" target=\"_blank\">
+              Correlation backbone, a 2-nearest-neighbor graph (PDF)
+            </a>
+          </li>
+          <li>
+            <a href=\"Sample Similarity Analysis/Correlation Network.pdf\" target=\"_blank\">
+              Correlation network connecting samples with r > 0.5 (PDF)
+            </a>
+          </li>
+          <li>
+            <a href=\"Sample Similarity Analysis/Correlation Maps.pdf\" target=\"_blank\">
+              Pairwise correlation maps (supervised & clustered orderings) (PDF)
+            </a>
+          </li>
+        </ul>
+  
+        Component Analysis:
+    
+        <ul>
+          <li>
+            <a href=\"Sample Similarity Analysis/Component Analysis.pdf\" target=\"_blank\">
+              Independent Component Analysis: 2d-ICA, 3d-ICA (PDF)
+            </a>
+          </li>
+        </ul>", sep="", file=outfile)
+  }  
+    
+  cat("
+    <h2>Expression Module Analysis</h2>
 
+    <p>
+      Different criteria of spot module definition such as overexpression or
+      mutual correlations between the metagenes where applied.
+      The reports comprise integrated portraits, functional analyses.
+    </p>
+
+    <ul>
+      <li>
+        <a href=\"Summary Sheets - Modules/0verview.html\" target=\"_blank\">
+          Spot Reports (HTML)
+        </a>
+      </li>
+    </ul>
+
+    <p>
+      Analyses based on PAT-wise aggregated data, including clustering dendrogram, 
+      portraits and assotiation to the sample groups.<br>
+      PATs were defined using <i>",preferences$standard.spot.modules,"</i> approach.
+    </p>
+      
+      <ul>
+        <li>
+        <a href=\"Summary Sheets - PATs/PAT report.pdf\" target=\"_blank\">
+        PAT Report (PDF)
+        </a>
+      </li>
+    </ul>", sep="", file=outfile)    
+
+
+  if( file.exists(file.path(paste(files.name, "- Results"), "Summary Sheets - Groups/0verview.html")) ) 
+  {  
+    cat("
+      <h2>Group Analyses</h2>
       <p>
         Analyses based on group-wise aggregated data, including portraits,
         clustering and functional analyses.
@@ -256,8 +300,7 @@ pipeline.htmlSummary <- function()
       </ul>", sep="", file=outfile)
   }
 
-  if (length(unique(group.labels)) > 1 &&
-      length(unique(group.labels)) < 8)
+  if( file.exists(file.path(paste(files.name, "- Results"), "Summary Sheets - Differences/0verview.html")) ) 
   {
     cat("
       <h2>Pairwise Differences Analyses</h2>

@@ -1,14 +1,11 @@
 pipeline.genesetStatisticSamples <- function()
 {
-  progress.current <- 0
-  progress.max <- ncol(indata)
-  util.progress(progress.current, progress.max)
 
   ### perform GS analysis ###
-  t.ensID.m <<- t.g.m[which(rownames(indata) %in% names(gene.ids)),]
-  t.ensID.m <<- do.call(rbind, by(t.ensID.m, gene.ids, colMeans))
+  t.ensID.m <<- t.g.m[which(rownames(indata) %in% names(gene.info$ids)),]
+  t.ensID.m <<- do.call(rbind, by(t.ensID.m, gene.info$ids, colMeans))
 
-  if (preferences$geneset.analysis.exact)
+  if (preferences$activated.modules$geneset.analysis.exact)
   {
     gs.null.list <- list()
 
@@ -31,9 +28,6 @@ pipeline.genesetStatisticSamples <- function()
     null.culdensity <- ecdf(abs(unlist(null.scores)))
   }
 
-  progress.current <- progress.max / 2
-  util.progress(progress.current, progress.max)
-
   spot.list.samples <<- lapply(seq_along(spot.list.samples) , function(m)
   {
     x <- spot.list.samples[[m]]
@@ -44,7 +38,7 @@ pipeline.genesetStatisticSamples <- function()
       GeneSet.GSZ(spot.gene.ids, all.gene.statistic, gs.def.list, sort=FALSE)
 #      GeneSet.maxmean(all.gene.statistic, gs.def.list)
 
-    if (preferences$geneset.analysis.exact)
+    if (preferences$activated.modules$geneset.analysis.exact)
     {
        x$GSZ.p.value <- 1 - null.culdensity(abs(x$GSZ.score))
        names(x$GSZ.p.value) <- names(x$GSZ.score)
@@ -54,17 +48,10 @@ pipeline.genesetStatisticSamples <- function()
   })
   names(spot.list.samples) <<- colnames(indata)
   
-  progress.current <- progress.max * 0.9
-  util.progress(progress.current, progress.max)
-
   ### GSZ table output ###
   samples.GSZ.scores <<- do.call(cbind, lapply(spot.list.samples, function(x)
   {
     return(x$GSZ.score[names(gs.def.list)])
   }))
 
-  ### CSV output ###
-  filename <- file.path( output.paths["CSV"], "Sample GSZ scores.csv")
-  util.info("Writing:", filename)
-  write.csv2(samples.GSZ.scores, filename)
 }

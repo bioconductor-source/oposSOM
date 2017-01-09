@@ -1,6 +1,6 @@
 pipeline.htmlGenesetAnalysis <- function()
 {
-  if (!preferences$geneset.analysis)
+  if (!preferences$activated.modules$geneset.analysis)
   {
     return()
   }
@@ -117,11 +117,6 @@ pipeline.htmlGenesetAnalysis <- function()
         <li>
           <a href=\"0verview Cancer Hallmarks.pdf\" target=\"_blank\">
             Hallmarks of Cancer (PDF)
-          </a>
-        </li>
-        <li>
-          <a href=\"0verview Chromosome Expression.pdf\" target=\"_blank\">
-            Heatmaps of Chromosomewise Expression (PDF)
           </a>
         </li>
       </ul>

@@ -21,7 +21,7 @@ pipeline.detectEnsemblDataset <- function()
 
   auto.rowname.ids <- c("ensembl_gene_id", "entrezgene", "hgnc_symbol")
 
-  mart <- useMart('ENSEMBL_MART_ENSEMBL',host="www.ensembl.org")
+  mart <- useMart(biomart=preferences$database.biomart, host=preferences$database.host)
 
   for (ds in names(auto.datasets))
   {

@@ -1,20 +1,19 @@
-pipeline.2ndLvlModuleCorrelation <- function(s, hcl)
+pipeline.moduleCorrelationMap <- function(pcm, hcl)
 {
-  pcm <- cor(s)
   pcm <- pcm[hcl$order,hcl$order]
   core.rect.thresh <- quantile(pcm, 0.9)
-  pcm.mask <- matrix(NA,ncol(indata),ncol(indata),dimnames=dimnames(pcm))
+  pcm.mask <- matrix(NA,ncol(pcm),ncol(pcm),dimnames=dimnames(pcm))
 
-  for (core.rect.dim in ncol(indata)*c(0.1,0.05,0.02))
+  for (core.rect.dim in ncol(pcm)*c(0.1,0.05,0.02))
   {
     x.i <- 1
     y.i <- 1
 
     core.rect.sum.thresh <- core.rect.thresh * core.rect.dim^2
 
-    for (x.i in 1:(ncol(indata)-core.rect.dim+1))
+    for (x.i in 1:(ncol(pcm)-core.rect.dim+1))
     {
-      for (y.i in x.i:(ncol(indata)-core.rect.dim+1))
+      for (y.i in x.i:(ncol(pcm)-core.rect.dim+1))
       {
         core.sum <- sum(pcm[c(x.i:(x.i+core.rect.dim-1)), c(y.i:(y.i+core.rect.dim-1))])
 
@@ -45,8 +44,8 @@ pipeline.2ndLvlModuleCorrelation <- function(s, hcl)
       dim.x <- 1
       dim.y <- 1
 
-      while ((x.i+dim.x) <= ncol(indata) &&
-             (y.i+dim.y) <= ncol(indata) &&
+      while ((x.i+dim.x) <= ncol(pcm) &&
+             (y.i+dim.y) <= ncol(pcm) &&
              all(pcm.mask[x.i:(x.i+dim.x), y.i:(y.i+dim.y)] == 1, na.rm=TRUE))
       {
         dim.x <- dim.x + 1
@@ -59,12 +58,12 @@ pipeline.2ndLvlModuleCorrelation <- function(s, hcl)
       {
         grown <- FALSE
 
-        if ((x.i+dim.x) <= ncol(indata) &&
+        if ((x.i+dim.x) <= ncol(pcm) &&
             all(pcm.mask[x.i:(x.i+dim.x), y.i:(y.i+dim.y-1)] == 1, na.rm=TRUE))
         {
           dim.x <- dim.x + 1
           grown <- TRUE
-        } else if ((y.i+dim.y) <= ncol(indata) &&
+        } else if ((y.i+dim.y) <= ncol(pcm) &&
                    all(pcm.mask[x.i:(x.i+dim.x-1), y.i:(y.i+dim.y)] == 1, na.rm=TRUE))
         {
           dim.y <- dim.y + 1
@@ -86,8 +85,8 @@ pipeline.2ndLvlModuleCorrelation <- function(s, hcl)
       dim.x <- 1
       dim.y <- 1
 
-      while ((x.i+dim.x) <= ncol(indata) &&
-             (y.i+dim.y) <= ncol(indata) &&
+      while ((x.i+dim.x) <= ncol(pcm) &&
+             (y.i+dim.y) <= ncol(pcm) &&
              all(pcm.mask[x.i:(x.i+dim.x), y.i:(y.i+dim.y)] == -1, na.rm=TRUE))
       {
         dim.x <- dim.x + 1
@@ -100,12 +99,12 @@ pipeline.2ndLvlModuleCorrelation <- function(s, hcl)
       {
         grown <- FALSE
 
-        if ((x.i+dim.x) <= ncol(indata) &&
+        if ((x.i+dim.x) <= ncol(pcm) &&
             all(pcm.mask[x.i:(x.i+dim.x), y.i:(y.i+dim.y-1)] == -1, na.rm=TRUE))
         {
           dim.x <- dim.x + 1
           grown <- TRUE
-        } else if ((y.i+dim.y) <= ncol(indata) &&
+        } else if ((y.i+dim.y) <= ncol(pcm) &&
                    all(pcm.mask[x.i:(x.i+dim.x-1), y.i:(y.i+dim.y)] == -1, na.rm=TRUE))
         {
           dim.y <- dim.y + 1
@@ -118,16 +117,16 @@ pipeline.2ndLvlModuleCorrelation <- function(s, hcl)
     }
 
     boxes.pos <- boxes.pos[which(sapply(boxes.pos, function(x) { x['dim.x'] * x['dim.y'] }) >
-                                 ceiling((ncol(indata)*0.02)^2))]
+                                 ceiling((ncol(pcm)*0.02)^2))]
 
     boxes.neg <- boxes.neg[which(sapply(boxes.neg, function(x) { x['dim.x'] * x['dim.y'] }) >
-                                 ceiling((ncol(indata)*0.02)^2))]
+                                 ceiling((ncol(pcm)*0.02)^2))]
 
     boxes.pos <- boxes.pos[which(sapply(boxes.pos, function(x) { min(x['dim.x'], x['dim.y']) }) >
-                                 ceiling(ncol(indata)*0.01))]
+                                 ceiling(ncol(pcm)*0.01))]
 
     boxes.neg <- boxes.neg[which(sapply(boxes.neg, function(x) { min(x['dim.x'], x['dim.y']) }) >
-                                 ceiling(ncol(indata)*0.01))]
+                                 ceiling(ncol(pcm)*0.01))]
 
 
 
@@ -137,14 +136,14 @@ pipeline.2ndLvlModuleCorrelation <- function(s, hcl)
            widths=c(1, 0.2, 4), heights=c(1.2, 0.2, 4), respect=TRUE)
 
     par(mar = c(8, 0, 0, 0.5))
-    image(rbind(1:ncol(indata)), col=group.colors[hcl$order], axes=FALSE)
+    image(rbind(1:ncol(pcm)), col=group.colors[hcl$order], axes=FALSE)
 
-    par(mar = c(0.5, 0, 0, 8))
-    image(cbind(1:ncol(indata)), col=group.colors[hcl$order], axes=FALSE)
+    par(mar = c(0.5, 0, 0, 6))
+    image(cbind(1:ncol(pcm)), col=group.colors[hcl$order], axes=FALSE)
 
-    par(mar = c(8, 0, 0, 8))
+    par(mar = c(8, 0, 0, 6))
 
-    image(x=c(0:ncol(indata)), y=c(0:ncol(indata)), z=pcm,col=color.palette.heatmaps(1000),
+    image(x=c(0:ncol(pcm)), y=c(0:ncol(pcm)), z=pcm,col=color.palette.heatmaps(1000),
           axes=FALSE, xlab="", ylab="")
 
     box()
@@ -245,7 +244,7 @@ pipeline.2ndLvlModuleCorrelation <- function(s, hcl)
 
     par(mar=c(8, 0, 0, 0))
     plot(ddr, horiz=TRUE, axes=FALSE, yaxs="i", leaflab="none")
-    par(mar=c(0, 0, 1, 8))
+    par(mar=c(0, 0, 1, 6))
     plot(ddr, axes=FALSE, xaxs="i", leaflab="none")
     title(paste("Module correlation map (",preferences$standard.spot.modules,")",sep=""), cex.main = 1.5)
   }
