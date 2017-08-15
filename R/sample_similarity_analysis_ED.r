@@ -5,14 +5,14 @@ pipeline.sampleSimilarityAnalysisED <- function()
   
   filename <- file.path(paste(files.name, "- Results"), "Sample Similarity Analysis", "t-SNE.pdf")
   util.info("Writing:", filename)
-  pdf(filename, 21/2.54, 21/2.54)
+  pdf(filename, 21/2.54, 21/2.54, useDingbats=FALSE)
 
   for (i in 1:2 )
   {
     d <- if( i == 1 ) get(paste("spot.list.",preferences$standard.spot.modules,sep=""))$spotdata else metadata
     n <- if( i == 1 ) paste( "module data (", preferences$standard.spot.modules, ")") else "metagene data"
     
-    suppressMessages({  tsne.res <- tsne( t(d) )  })
+    suppressMessages({  tsne.res <- tsne( t(d), perplexity=5 )  })
     
     par(mar=c(2,2,2,2))
     plot(tsne.res, col=group.colors, pch=16)
@@ -25,7 +25,7 @@ pipeline.sampleSimilarityAnalysisED <- function()
   
   filename <- file.path(paste(files.name, "- Results"), "Sample Similarity Analysis", "Neighbor Joining.pdf")
   util.info("Writing:", filename)
-  pdf(filename, 21/2.54, 21/2.54)
+  pdf(filename, 21/2.54, 21/2.54, useDingbats=FALSE)
   
   for (i in 1:2 )
   {
@@ -50,7 +50,7 @@ pipeline.sampleSimilarityAnalysisED <- function()
 
   filename <- file.path(paste(files.name, "- Results"), "Sample Similarity Analysis", "Hierarchical Clustering.pdf")
   util.info("Writing:", filename)
-  pdf(filename, 29.7/2.54, 21/2.54)
+  pdf(filename, 29.7/2.54, 21/2.54, useDingbats=FALSE)
   
   for (i in 1:2 )
   {
