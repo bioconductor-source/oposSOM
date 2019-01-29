@@ -1,4 +1,4 @@
-exportPattern("^(opossom)\\..+")
+exportPattern("*")
 
 import("biomaRt")
 

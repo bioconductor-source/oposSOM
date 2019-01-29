@@ -353,7 +353,7 @@ pipeline.checkInputParameters <- function()
       for (i in seq_along(unique(group.labels)))
       {
         group.colors[which(group.labels == unique(group.labels)[i])] <<-
-          colorRampPalette(c("blue3", "blue", "lightblue", "green2", "gold", "red", "red3"))(length(unique(group.labels)))[i]
+          colorRampPalette(c("blue3", "blue", "green3", "gold", "red", "red3"))(length(unique(group.labels)))[i]
       }
     }
     
@@ -382,11 +382,11 @@ pipeline.checkInputParameters <- function()
     if( length(environment(color.palette.portraits))!=3 || !all( c("colors","ramp") %in% ls(environment(color.palette.portraits)) ) )
     {
       util.warn("Invalid value of \"color.palette.portraits\". Using standard scheme")
-      color.palette.portraits <<- colorRampPalette(c("darkblue","blue","lightblue","green2","yellow","red","darkred"))
+      color.palette.portraits <<- colorRampPalette(c("darkblue","blue","lightblue3","green3","yellow2","red2","darkred"))
     }
   } else
   {
-    color.palette.portraits <<- colorRampPalette(c("darkblue","blue","lightblue","green2","yellow","red","darkred"))
+    color.palette.portraits <<- colorRampPalette(c("darkblue","blue","lightblue3","green3","yellow2","red2","darkred"))
   }
   
   if (!is.null(color.palette.heatmaps)) # check if given color palette is a valid function
@@ -394,11 +394,11 @@ pipeline.checkInputParameters <- function()
     if( length(environment(color.palette.heatmaps))!=3 || !all( c("colors","ramp") %in% ls(environment(color.palette.heatmaps)) ) )
     {
       util.warn("Invalid value of \"color.palette.heatmaps\". Using standard scheme")
-      color.palette.heatmaps <<- colorRampPalette(c("blue4","blue","gray90","orange","red4"))
+      color.palette.heatmaps <<- colorRampPalette(c("#2C7BB6","#64A4CC","#9CCEE3","#C6E5DB","#ECF6C8","#FEEDAA","#FDC980","#F89D59","#E75B3A","#D7191C"))
     }
   } else
   {
-    color.palette.heatmaps <<- colorRampPalette(c("blue4","blue","gray90","orange","red4"))
+    color.palette.heatmaps <<- colorRampPalette(c("#2C7BB6","#64A4CC","#9CCEE3","#C6E5DB","#ECF6C8","#FEEDAA","#FDC980","#F89D59","#E75B3A","#D7191C"))
   }
   
   if(preferences$activated.modules$primary.analysis)
@@ -411,6 +411,10 @@ pipeline.checkInputParameters <- function()
     output.paths <<-
       c("CSV"=paste(files.name, "- Results/CSV Sheets"),
         "Summary Sheets Samples"=paste(files.name, "- Results/Summary Sheets - Samples") )
+    
+    if( !grepl("german",sessionInfo()$locale,ignore.case=TRUE) &&
+        !grepl("bioinf.uni-leipzig.de",Sys.info()["nodename"],ignore.case=TRUE) )
+      write.csv2 <<- write.csv
   } 
   
   return(TRUE)
