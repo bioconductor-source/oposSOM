@@ -1,3 +1,7 @@
+2.5.1:
++ Minor bugfixes
+2.5.0:
++ Version bump of Bioconductor
 2.0.3:
 + Check for detected singleton spot modules implemented
 2.0.2:

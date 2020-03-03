@@ -13,6 +13,12 @@ pipeline.prepareAnnotation <- function()
                       chr.band = empty.vec.chr,
                       chr.start = empty.vec.num )
   
+  if(!preferences$activated.modules$primary.analysis)
+  {
+    gene.info$coordinates <<- apply( som.result$node.summary[som.result$feature.BMU,c("x","y")], 1, paste, collapse=" x " )
+    names(gene.info$coordinates) <<- rownames(indata)
+  }
+  
   chromosome.list <<- list()
 
   if (!util.call(biomart.available, environment()))
@@ -174,6 +180,7 @@ pipeline.prepareAnnotation <- function()
 
 
   gs.def.list <<- gs.def.list[ which(sapply(sapply(gs.def.list, head, 1), length) >= 2) ]
+	gs.def.list <<- gs.def.list[ which(sapply(names(gs.def.list),nchar) < 60 ) ]
 
   if (length(gs.def.list) > 0)
   {

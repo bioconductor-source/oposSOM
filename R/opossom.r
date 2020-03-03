@@ -39,7 +39,7 @@ opossom.new <- function(preferences=NULL)
   env$groupwise.group.colors <- NULL
   env$unique.protein.ids <- NULL
   env$WAD.g.m <- NULL
-  env$write.csv2 <- write.csv2
+  env$csv.function <- write.csv2
 
   # Generate some additional letters
   env$LETTERS <- c(LETTERS, as.vector(sapply(1:10, function(x) {
@@ -52,6 +52,7 @@ opossom.new <- function(preferences=NULL)
 
   # Set default preferences
   env$preferences <- list(dataset.name = "Unnamed",
+													note = "",
                           dim.1stLvlSom = "auto",
                           dim.2ndLvlSom = 20,
                           training.extension = 1,
@@ -65,7 +66,7 @@ opossom.new <- function(preferences=NULL)
                                                     "group.analysis" = TRUE,
                                                     "difference.analysis" = TRUE ),
                           database.biomart = "ENSEMBL_MART_ENSEMBL",
-                          database.host = "aug2017.archive.ensembl.org",
+                          database.host = "jan2019.archive.ensembl.org",
                           database.dataset = "auto",
                           database.id.type = "",
                           standard.spot.modules = "dmap",
