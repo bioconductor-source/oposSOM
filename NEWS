@@ -1,3 +1,5 @@
+2.5.2:
++ Bugfix for class(...) error occuring in R > 4.0.0
 2.5.1:
 + Minor bugfixes
 2.5.0:
