@@ -100,93 +100,93 @@ pipeline.sampleSimilarityAnalysisSOM <- function()
     
     
     ##### Polygone-2ndSOM #####
-    # if (length(unique(group.labels)) > 1)
-    # {
-    #   transparent.group.colors <- sapply(groupwise.group.colors, function(x)
-    #   {
-    #     paste(substr(x, 1, 7) , "50", sep="")
-    #   })
-    #   
-    #   names(transparent.group.colors) <- unique(group.labels)
-    #   
-    #   plot(secLvlSom$feature.coords[,"x"], -secLvlSom$feature.coords[,"y"],
-    #        type="n", axes=FALSE, xlab="", ylab="", cex=4, col=group.colors, pch=16,
-    #        xaxs="i", yaxs="i", xlim=xl, ylim=yl,main="Second level SOM, group outlines", cex.main=1)
-    #   
-    #   for (i in seq_along(unique(group.labels)))
-    #   {
-    #     group.member <- which(group.labels==unique(group.labels)[i])
-    #     group.centroid <- colMeans(secLvlSom$feature.coords[group.member, 1:2])
-    #     
-    #     hull <- chull(secLvlSom$feature.coords[group.member, 1],
-    #                   secLvlSom$feature.coords[group.member, 2])
-    #     
-    #     polygon(secLvlSom$feature.coords[group.member[hull], 1],
-    #             secLvlSom$feature.coords[group.member[hull], 2],
-    #             col=transparent.group.colors[i], lty=1,
-    #             border=groupwise.group.colors[i])
-    #   }
-    #   
-    #   legend("topright", as.character(unique(group.labels)), cex=0.5,
-    #          text.col=groupwise.group.colors, bg="white")
-    #   
-    #   box()
-    # }
+    if (length(unique(group.labels)) > 1)
+    {
+      transparent.group.colors <- sapply(groupwise.group.colors, function(x)
+      {
+        paste(substr(x, 1, 7) , "50", sep="")
+      })
+
+      names(transparent.group.colors) <- unique(group.labels)
+
+      plot(secLvlSom$feature.coords[,"x"], -secLvlSom$feature.coords[,"y"],
+           type="n", axes=FALSE, xlab="", ylab="", cex=4, col=group.colors, pch=16,
+           xaxs="i", yaxs="i", xlim=xl, ylim=yl,main="Second level SOM, group outlines", cex.main=1)
+
+      for (i in seq_along(unique(group.labels)))
+      {
+        group.member <- which(group.labels==unique(group.labels)[i])
+        group.centroid <- colMeans(secLvlSom$feature.coords[group.member, 1:2])
+
+        hull <- chull(secLvlSom$feature.coords[group.member, 1],
+                      secLvlSom$feature.coords[group.member, 2])
+
+        polygon(secLvlSom$feature.coords[group.member[hull], 1],
+                secLvlSom$feature.coords[group.member[hull], 2],
+                col=transparent.group.colors[i], lty=1,
+                border=groupwise.group.colors[i])
+      }
+
+      legend("topright", as.character(unique(group.labels)), cex=0.5,
+             text.col=groupwise.group.colors, bg="white")
+
+      box()
+    }
     
     
     ##### Plot SampleSOM with expression portraits ######
-    par(mar=c(1,1,1,1))
-    xl <- c(0,21)
-    yl <- c(0,21)
-  
-    plot( 0, type="n", axes=FALSE, xlab="", ylab="", xlim=xl, ylim=yl, xaxs="i", yaxs="i",main=paste("Sample SOM on",n), cex.main=1)  
-    
-    if (length(unique(group.labels)) > 1)
-    {
-      legend("topright", as.character(unique(group.labels)), cex=0.5,
-             text.col=groupwise.group.colors, bg="white")
-    }
-  
-    coord.bins <- as.numeric( cut( c(1:preferences$dim.2ndLvlSom), breaks=20 ) )
-    for (j in 1:nrow(secLvlSom$node.summary))
-    {
-      
-      which.samples <-
-        intersect(which(coord.bins[secLvlSom$feature.coords[,"x"]+1] == coord.bins[secLvlSom$node.summary[j,"x"]+1]),
-                  which(coord.bins[secLvlSom$feature.coords[,"y"]+1] == coord.bins[secLvlSom$node.summary[j,"y"]+1]))
-  
-      if (!is.na(which.samples[1]))
-      {
-        m <- matrix(metadata[, which.samples[1]], preferences$dim.1stLvlSom, preferences$dim.1stLvlSom)
-  
-        if (max(m) - min(m) != 0)
-        {
-          m <- (m - min(m)) / (max(m) - min(m)) * 999
-        }
-  
-        m <- cbind(apply(m, 1, function(x){x}))[nrow(m):1,]
-        x <- pixmapIndexed(m , col=color.palette.portraits(1000), cellres=10)
-  
-        addlogo(x,
-                coord.bins[secLvlSom$feature.coords[which.samples[1],"x"]+1]+c(-0.45,0.455),
-                coord.bins[secLvlSom$feature.coords[which.samples[1],"y"]+1]+c(-0.45,0.45))
-  
-        which.samples <- which.samples[1:min(9, length(which.samples))]
-  
-        x.seq <- c(0,0.3,0,-0.3,0,-0.3,0.3,-0.3,0.3)[seq_along(which.samples)]
-        y.seq <- c(0,0,0.3,0,-0.3,-0.3,-0.3,0.3,0.3)[seq_along(which.samples)]
-  
-        points(coord.bins[secLvlSom$feature.coords[which.samples[1],"x"]+1]+x.seq,
-               coord.bins[secLvlSom$feature.coords[which.samples[1],"y"]+1]+y.seq,
-               pch=16, col=group.colors[which.samples], cex=1.2)
-  
-        points(coord.bins[secLvlSom$feature.coords[which.samples[1],"x"]+1]+x.seq,
-               coord.bins[secLvlSom$feature.coords[which.samples[1],"y"]+1]+y.seq,
-               pch=1, col="gray20", cex=1.2, lwd=1)
-      }
-    }
-  
-    box()
+    # par(mar=c(1,1,1,1))
+    # xl <- c(0,21)
+    # yl <- c(0,21)
+    # 
+    # plot( 0, type="n", axes=FALSE, xlab="", ylab="", xlim=xl, ylim=yl, xaxs="i", yaxs="i",main=paste("Sample SOM on",n), cex.main=1)  
+    # 
+    # if (length(unique(group.labels)) > 1)
+    # {
+    #   legend("topright", as.character(unique(group.labels)), cex=0.5,
+    #          text.col=groupwise.group.colors, bg="white")
+    # }
+    # 
+    # coord.bins <- as.numeric( cut( c(1:preferences$dim.2ndLvlSom), breaks=20 ) )
+    # for (j in 1:nrow(secLvlSom$node.summary))
+    # {
+    #   
+    #   which.samples <-
+    #     intersect(which(coord.bins[secLvlSom$feature.coords[,"x"]+1] == coord.bins[secLvlSom$node.summary[j,"x"]+1]),
+    #               which(coord.bins[secLvlSom$feature.coords[,"y"]+1] == coord.bins[secLvlSom$node.summary[j,"y"]+1]))
+    # 
+    #   if (!is.na(which.samples[1]))
+    #   {
+    #     m <- matrix(metadata[, which.samples[1]], preferences$dim.1stLvlSom, preferences$dim.1stLvlSom)
+    # 
+    #     if (max(m) - min(m) != 0)
+    #     {
+    #       m <- (m - min(m)) / (max(m) - min(m)) * 999
+    #     }
+    # 
+    #     m <- cbind(apply(m, 1, function(x){x}))[nrow(m):1,]
+    #     x <- pixmapIndexed(m , col=color.palette.portraits(1000), cellres=10)
+    # 
+    #     addlogo(x,
+    #             coord.bins[secLvlSom$feature.coords[which.samples[1],"x"]+1]+c(-0.45,0.455),
+    #             coord.bins[secLvlSom$feature.coords[which.samples[1],"y"]+1]+c(-0.45,0.45))
+    # 
+    #     which.samples <- which.samples[1:min(9, length(which.samples))]
+    # 
+    #     x.seq <- c(0,0.3,0,-0.3,0,-0.3,0.3,-0.3,0.3)[seq_along(which.samples)]
+    #     y.seq <- c(0,0,0.3,0,-0.3,-0.3,-0.3,0.3,0.3)[seq_along(which.samples)]
+    # 
+    #     points(coord.bins[secLvlSom$feature.coords[which.samples[1],"x"]+1]+x.seq,
+    #            coord.bins[secLvlSom$feature.coords[which.samples[1],"y"]+1]+y.seq,
+    #            pch=16, col=group.colors[which.samples], cex=1.2)
+    # 
+    #     points(coord.bins[secLvlSom$feature.coords[which.samples[1],"x"]+1]+x.seq,
+    #            coord.bins[secLvlSom$feature.coords[which.samples[1],"y"]+1]+y.seq,
+    #            pch=1, col="gray20", cex=1.2, lwd=1)
+    #   }
+    # }
+    # 
+    # box()
     
   }  
     
