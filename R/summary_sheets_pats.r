@@ -17,33 +17,33 @@ pipeline.summarySheetsPATs <- function()
   
   ### PAT clustering
 
-  if( ncol(pat.metadata) > 2 )
-  {
-    hc <- hclust(dist(t(pat.metadata)))
-  
-    par(mar=c(8,6,4,5))
-    plot(hc, main="PAT clustering", xlab="", sub="", hang=0.05 )
-    
-    cex.sample.portraits <- 0.025
-    
-    par(new=TRUE,mar=c(1,par("mar")[-1]))
-    frame()
-  
-    for (i in seq_along(hc$order))
-    {
-      pat <- colnames(pat.metadata)[ hc$order[i] ]
-                      
-      m <- matrix(pat.metadata[,pat],
-                  preferences$dim.1stLvlSom, preferences$dim.1stLvlSom)
-  
-      if (max(m) - min(m) != 0)  m <- 1 + (m - min(m)) / (max(m) - min(m)) * 999
-  
-      m <- cbind(apply(m, 1, function(x){x}))[nrow(m):1,]
-      pix <- pixmapIndexed(m , col = color.palette.portraits(1000), cellres=10)
-  
-      addlogo(pix, (i-1)/(ncol(pat.metadata)-1)+cex.sample.portraits*c(-1,1), 0.05+0.08*(i%%2)+cex.sample.portraits*c(-1.2,1.2))
-    }
-  }
+  # if( ncol(pat.metadata) > 2 )
+  # {
+  #   hc <- hclust(dist(t(pat.metadata)))
+  # 
+  #   par(mar=c(8,6,4,5))
+  #   plot(hc, main="PAT clustering", xlab="", sub="", hang=0.05 )
+  #   
+  #   cex.sample.portraits <- 0.025
+  #   
+  #   par(new=TRUE,mar=c(1,par("mar")[-1]))
+  #   frame()
+  # 
+  #   for (i in seq_along(hc$order))
+  #   {
+  #     pat <- colnames(pat.metadata)[ hc$order[i] ]
+  #                     
+  #     m <- matrix(pat.metadata[,pat],
+  #                 preferences$dim.1stLvlSom, preferences$dim.1stLvlSom)
+  # 
+  #     if (max(m) - min(m) != 0)  m <- 1 + (m - min(m)) / (max(m) - min(m)) * 999
+  # 
+  #     m <- cbind(apply(m, 1, function(x){x}))[nrow(m):1,]
+  #     pix <- pixmapIndexed(m , col = color.palette.portraits(1000), cellres=10)
+  # 
+  #     addlogo(pix, (i-1)/(ncol(pat.metadata)-1)+cex.sample.portraits*c(-1,1), 0.05+0.08*(i%%2)+cex.sample.portraits*c(-1.2,1.2))
+  #   }
+  # }
 
   ### PAT portraits
   
