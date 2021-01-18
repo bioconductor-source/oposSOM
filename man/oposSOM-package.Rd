@@ -19,8 +19,8 @@ summary HTML file.
 \tabular{ll}{
 Package: \tab oposSOM\cr
 Type: \tab Package\cr
-Version: \tab 2.9.1\cr\cr
-Date: \tab 2021-01-14\cr
+Version: \tab 2.1.3\cr\cr
+Date: \tab 2020-12-15\cr
 License: \tab GPL (>= 2)\cr
 }
 }
@@ -45,7 +45,7 @@ of genome-wide expression landscapes on Bioconductor. (Bioinformatics 2015)
 env <- opossom.new(list(dataset.name="Example",
                         dim.1stLvlSom=20))
 
-env$indata <- matrix(runif(10000), 1000, 10)
+env$indata <- matrix(rnorm(10000), 1000, 10)
 
 env$group.labels <- "auto"
 
