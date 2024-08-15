@@ -16,6 +16,7 @@ pipeline.patAssignment <- function(env)
 
   thresh.global <- sd(as.vector(spot.list$spotdata))
   spot.counts <- rowSums( spot.list$spotdata > thresh.global )
+  spot.counts <- spot.counts[which(spot.counts>0)]
   spot.order <- order(spot.counts,decreasing = T)
   
   env$pat.labels <- apply( spot.list$spotdata, 2, function(x)
@@ -27,14 +28,14 @@ pipeline.patAssignment <- function(env)
   
   # join small pats into their precursors
   
-  if(any(env$pat.labels!=""))
-    while( sort(table(env$pat.labels))[1] < length(env$pat.labels)*0.01 )
+  if(any(env$pat.labels!="")&&length(unique(env$pat.labels))>4)
+    while( any(env$pat.labels!="") && sort(table(env$pat.labels[which(env$pat.labels!="")]))[1] < length(env$pat.labels)*0.01 )
     {
-      pat.to.merge <- find.next.merge.pat( env$pat.labels, spot.counts )
-      least.freq.spot <- names(sort(spot.counts[ strsplit(pat.to.merge," ")[[1]] ])[1])
-      pat.after.merge <- sub(least.freq.spot,"",pat.to.merge)
-      pat.after.merge <- sub("  "," ",pat.after.merge)
-      pat.after.merge <- sub("^ | $","",pat.after.merge)  
+      pat.to.merge <- find.next.merge.pat( env$pat.labels[which(env$pat.labels!="")], spot.counts )
+			pat.to.merge.split <- strsplit(pat.to.merge," ")[[1]]
+      least.freq.spot <- names(sort(spot.counts[ pat.to.merge.split ])[1])
+			pat.after.merge <- pat.to.merge.split[which(pat.to.merge.split!=least.freq.spot)]
+			pat.after.merge <- paste(pat.after.merge,collapse=" ")
       env$pat.labels[which(env$pat.labels==pat.to.merge)] <- pat.after.merge
     } 
   

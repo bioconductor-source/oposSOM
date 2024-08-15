@@ -41,7 +41,16 @@ color.palette.discrete <- function(n)   # color scheme from https://personal.sro
   if (n >= 23) return( colorRampPalette(color.set[-1])(n) )
 }
 
+color.palette.interlace <- function(n)
+{
+  col <- color.palette.discrete(n)
+  o <- do.call( c, lapply( 1:floor(n/2), function(i) c(i,i+ceiling(n/2)) ) )
+  if( length(o)==n-1 ) o <- c( o, ceiling(n/2) )
+  return(col[o])
+}
+
 color.palette.portraits <- colorRampPalette(c("darkblue","blue","lightblue3","green3","yellow2","red2","darkred"))
+color.palette.portraits.cbs <- colorRampPalette(c("#364B9A","#4393C3","#D1E5F0","#5AAE61","#F7F056","#DD3D2D","#662506"))
 
 # color.palette.heatmaps <- colorRampPalette(c("#2C7BB6","#64A4CC","#9CCEE3","#C6E5DB","#ECF6C8","#FEEDAA","#FDC980","#F89D59","#E75B3A","#D7191C"))
 color.palette.heatmaps <- colorRampPalette(c("#364B9A","#4A7BB7","#6EA6CD","#98CAE1","#C2E4EF","#EAECCC","#FEDA8B","#FDB366","#F67E4B","#DD3D2D","#A50026"))

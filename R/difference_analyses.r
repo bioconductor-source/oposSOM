@@ -32,8 +32,8 @@ pipeline.differenceAnalyses = function(env)
   }
   
   
-  dir.create(paste(env$files.name, "- Results/Summary Sheets - Differences"), showWarnings=FALSE)
-  dir.create(paste(env$files.name, "- Results/Summary Sheets - Differences/CSV Sheets"), showWarnings=FALSE)
+  dir.create("Summary Sheets - Differences", showWarnings=FALSE)
+  dir.create("Summary Sheets - Differences/CSV Sheets", showWarnings=FALSE)
   
   local.env <- new.env()
   local.env$preferences <- env$preferences
@@ -80,7 +80,9 @@ pipeline.differenceAnalyses = function(env)
       if( length(samples.indata[[1]])>1 && var(x[samples.indata[[1]]]) == 0 ) return(1) 
       if( length(samples.indata[[2]])>1 && var(x[samples.indata[[2]]]) == 0 ) return(1) 
       
-      return( t.test( x[samples.indata[[1]]], x[samples.indata[[2]]], paired=FALSE, var.equal=(length(samples.indata[[1]])==1 || length(samples.indata[[2]])==1 ) )$p.value )
+			p <- t.test( x[samples.indata[[1]]], x[samples.indata[[2]]], paired=FALSE, var.equal=(length(samples.indata[[1]])==1 || length(samples.indata[[2]])==1 ) )$p.value
+			if( p < 1e-16) p <- 1e-16
+      return( p )
     } )
     
     suppressWarnings({
@@ -114,20 +116,16 @@ pipeline.differenceAnalyses = function(env)
   local.env$group.colors <- rep("gray20",length(differences.list))
   names(local.env$group.colors) <- names(differences.list)
 
-  local.env$output.paths <- c("CSV" = paste(env$files.name, "- Results/Summary Sheets - Differences/CSV Sheets"),
-                     "Summary Sheets Samples"= paste(env$files.name, "- Results/Summary Sheets - Differences/Reports"))
-
-  local.env <- pipeline.detectSpotsSamples(local.env)
+  local.env$output.paths <- c("CSV" = "Summary Sheets - Differences/CSV Sheets",
+                     "Summary Sheets Samples"= "Summary Sheets - Differences/Reports")
 
   if (local.env$preferences$activated.modules$geneset.analysis)
   {
     if (ncol(local.env$indata) == 1)   # crack for by command, which requires >=2 columns
     {
       local.env$indata <- cbind(local.env$indata, local.env$indata)
-      local.env <- pipeline.detectSpotsSamples(local.env)
       local.env <- pipeline.genesetStatisticSamples(local.env)
       local.env$indata <- local.env$indata[,1,drop=FALSE]
-      local.env$spot.list.samples <- local.env$spot.list.samples[1]
       local.env$samples.GSZ.scores <- local.env$samples.GSZ.scores[,1,drop=FALSE]
     } else
     {
@@ -135,7 +133,6 @@ pipeline.differenceAnalyses = function(env)
     }
   }
 
-  pipeline.geneLists(local.env)
   pipeline.summarySheetsSamples(local.env)
   pipeline.htmlDifferencesSummary(local.env)
 }

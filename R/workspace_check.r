@@ -1,6 +1,7 @@
 workspace.check <- function(env)
 {
-
+  if(missing("env")) stop("environment missing!")
+  
   cat("Perform Workspace Check\n***********************\n"); flush.console()
   
   # Workspace objects and preferences list
@@ -85,6 +86,43 @@ workspace.check <- function(env)
     cat("spot.list.*: beta scores missing\n"); flush.console()
   }  
   
+  
+  for( x in ls(env) )
+  {
+    y <- get(x,envir = env)
+    
+    if( is.list(y) )
+    {
+      dummy <- sapply( names(y), function(xx)
+      {
+        yy <- y[[xx]]
+        if( is.matrix(yy) && any(colnames(yy)%in%colnames(env$indata)) ) 
+        { 
+          if( ncol(yy)!=ncol(env$indata) || any( colnames(yy) != colnames(env$indata) ) )
+            cat("samples in matrix object do not fit indata columns:",paste(x,xx,sep="$"),"\n"); flush.console()
+          
+        } else if( is.vector(yy) && any(names(yy)%in%colnames(env$indata)) ) 
+        { 
+          if( length(yy)!=ncol(env$indata) || any( names(yy) != colnames(env$indata) ) )
+            cat("samples in vector object do not fit indata columns:",paste(x,xx,sep="$"),"\n"); flush.console()
+        }
+        
+      }) 
+      
+    } else if( is.matrix(y) && any(colnames(y)%in%colnames(env$indata)) ) 
+    { 
+      if( ncol(y)!=ncol(env$indata) || any( colnames(y) != colnames(env$indata) ) )
+        cat("samples in data object do not fit indata columns:",x,"\n"); flush.console()
+    }
+    else if( is.vector(y) && any(names(y)%in%colnames(env$indata)) ) 
+    { 
+      if( length(y)!=ncol(env$indata) || any( names(y) != colnames(env$indata) ) )
+        cat("samples in data object do not fit indata columns:",x,"\n"); flush.console()
+    }
+    
+  }
+  
+ 
 
   # groups
 
@@ -112,10 +150,7 @@ workspace.check <- function(env)
   {
     cat("groupwise.group.colors: not converted into #RGB format\n"); flush.console()
   }
-  if (!all(names(env$group.silhouette.coef) == colnames(env$indata)))
-  {
-    cat("group.silhouette.coef: does not fit to samples\n"); flush.console()
-  }
+
 
    
   # Info objects

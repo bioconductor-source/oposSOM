@@ -1,12 +1,30 @@
 pipeline.detectSpotsModules <- function(env)
 {
+  env <- pipeline.detectOverexpressionModules(env)
+  env <- pipeline.detectUnderexpressionModules(env)
+  env <- pipeline.detectCorrelationModules(env)
+  env <- pipeline.detectKMeansModules(env)
+  env <- pipeline.detectGroupOverexpressionModules(env)
+  env <- pipeline.detectDMapModules(env)
+  
+  # check standard spot modules
+  if( length( env[[paste("spot.list.", env$preferences$standard.spot.modules,sep="")]]$spots ) < 2 )
+  {
+    env$preferences$standard.spot.modules <- "kmeans"
+    util.warn("Invalid value of \"standard.spot.modules\": Too few spots detected. Using \"kmeans\"")
+  } 
+  
+  return(env)
+}
+  
+  
+pipeline.detectOverexpressionModules <- function(env)
+{
   metadata.scaled <- apply(env$metadata, 2, function(x)
   {
     (x-min(x)) / (max(x)-min(x))
   })
-
-  ##### Overexpression Spots ######
-
+  
   # extract sample modules
   sample.spot.list <- list()
   sample.spot.core.list <- list()
@@ -196,6 +214,37 @@ pipeline.detectSpotsModules <- function(env)
     sample.spot.list[[1]][ which.max(rowMeans(env$metadata)) ] = 1
   }
 
+  ## check for split modules
+
+  for (i in seq_along(sample.spot.list))
+  {
+    core <- sample.spot.list[[i]]
+    core[which(!is.na(core))] <- -1
+    spot.i <- 0
+    
+    while (nrow(which(core == -1, arr.ind=TRUE)) > 0)
+    {
+      start.pix <- which(core == -1, arr.ind=TRUE)[1,]
+      spot.i <- spot.i + 1
+      core <- col.pix(core, start.pix[1], start.pix[2], spot.i, env$preferences$dim.1stLvlSom)
+    }
+    
+    if( max(core,na.rm=TRUE) > 1 )
+    {
+      sample.spot.list <- sample.spot.list[-i]
+      
+      for( module.i in 1:max(core,na.rm=TRUE) )
+      {
+        if( sum(core == module.i, na.rm=TRUE) >= env$preferences$spot.coresize.modules ) 
+        {
+          split.module <- core == module.i
+          split.module[which(!split.module)] <- NA
+          sample.spot.list[[length(sample.spot.list)+1]] <- split.module
+        }
+      }
+    }
+  }
+  
   ## define overexpression spots ##
   env$spot.list.overexpression <- list()
 
@@ -212,7 +261,7 @@ pipeline.detectSpotsModules <- function(env)
 
     if (length(spot.genes) > 0)
     {
-      env$spot.list.overexpression$overview.mask[which(!is.na(sample.spot.list[[i]]))] <- i
+      env$spot.list.overexpression$overview.mask[which(!is.na(sample.spot.list[[i]]))] <- ifelse( all(is.na(env$spot.list.overexpression$overview.mask)), 1, max(env$spot.list.overexpression$overview.mask,na.rm=TRUE)+1 )
       env$spot.list.overexpression$spots[[env$LETTERS[i]]] <- list()
       env$spot.list.overexpression$spots[[env$LETTERS[i]]]$metagenes <- spot.metagenes
       env$spot.list.overexpression$spots[[env$LETTERS[i]]]$genes <- spot.genes
@@ -220,7 +269,7 @@ pipeline.detectSpotsModules <- function(env)
       env$spot.list.overexpression$spots[[env$LETTERS[i]]]$mask[spot.metagenes] <- 1
 
       env$spot.list.overexpression$spots[[env$LETTERS[i]]]$position <-
-        colMeans(apply(env$som.result$node.summary[spot.metagenes, 1:2] + 1, 2, range))
+        colMeans(apply(env$som.result$node.summary[spot.metagenes, 1:2], 2, range))
 
       env$spot.list.overexpression$spots[[env$LETTERS[i]]]$beta.statistic <-
         get.beta.statistic(set.data=env$metadata[env$spot.list.overexpression$spots[[env$LETTERS[i]]]$metagenes,,drop=FALSE],
@@ -253,9 +302,17 @@ pipeline.detectSpotsModules <- function(env)
 
   colnames(env$spot.list.overexpression$spotdata) <- colnames(env$indata)
 
+  return(env)   
+}
 
-  ##### Underexpression Spots ######
 
+pipeline.detectUnderexpressionModules <- function(env)
+{
+  metadata.scaled <- apply(env$metadata, 2, function(x)
+  {
+    (x-min(x)) / (max(x)-min(x))
+  })
+  
   ## extract sample modules ##
   sample.spot.list <- list()
   sample.spot.core.list <- list()
@@ -459,7 +516,7 @@ pipeline.detectSpotsModules <- function(env)
 
     if (length(spot.genes) > 0)
     {
-      env$spot.list.underexpression$overview.mask[which(!is.na(sample.spot.list[[i]]))] <- i
+      env$spot.list.underexpression$overview.mask[which(!is.na(sample.spot.list[[i]]))] <- ifelse( all(is.na(env$spot.list.underexpression$overview.mask)), 1, max(env$spot.list.underexpression$overview.mask,na.rm=TRUE)+1 )
       env$spot.list.underexpression$spots[[env$letters[i]]] <- list()
       env$spot.list.underexpression$spots[[env$letters[i]]]$metagenes <- spot.metagenes
       env$spot.list.underexpression$spots[[env$letters[i]]]$genes <- spot.genes
@@ -467,7 +524,7 @@ pipeline.detectSpotsModules <- function(env)
       env$spot.list.underexpression$spots[[env$letters[i]]]$mask[spot.metagenes] <- 1
 
       env$spot.list.underexpression$spots[[env$letters[i]]]$position <-
-        colMeans(apply(env$som.result$node.summary[spot.metagenes, 1:2]+1, 2, range))
+        colMeans(apply(env$som.result$node.summary[spot.metagenes, 1:2], 2, range))
 
       env$spot.list.underexpression$spots[[env$letters[i]]]$beta.statistic <-
         get.beta.statistic(set.data=env$metadata[env$spot.list.underexpression$spots[[env$letters[i]]]$metagenes,,drop=FALSE],
@@ -500,8 +557,12 @@ pipeline.detectSpotsModules <- function(env)
 
   colnames(env$spot.list.underexpression$spotdata) <- colnames(env$indata)
 
+  return(env)   
+}
 
-  ##### Correlation Cluster ######
+
+pipeline.detectCorrelationModules <- function(env)
+{
   env$spot.list.correlation <- list()
   env$spot.list.correlation$overview.map <- NA
   env$spot.list.correlation$overview.mask <- rep(NA, env$preferences$dim.1stLvlSom ^ 2)
@@ -531,7 +592,7 @@ pipeline.detectSpotsModules <- function(env)
       
       if (length(geneset.genes) > 0)
       {
-        env$spot.list.correlation$overview.mask[as.numeric(cluster)] <- count.cluster
+        env$spot.list.correlation$overview.mask[as.numeric(cluster)] <- ifelse( all(is.na(env$spot.list.correlation$overview.mask)), 1, max(env$spot.list.correlation$overview.mask,na.rm=TRUE)+1 )
         env$spot.list.correlation$spots[[env$LETTERS[count.cluster]]] <- list()
         env$spot.list.correlation$spots[[env$LETTERS[count.cluster]]]$metagenes <- as.numeric(cluster)
         env$spot.list.correlation$spots[[env$LETTERS[count.cluster]]]$genes <- geneset.genes
@@ -539,7 +600,7 @@ pipeline.detectSpotsModules <- function(env)
         env$spot.list.correlation$spots[[env$LETTERS[count.cluster]]]$mask[as.numeric(cluster)] <- 1
 
         env$spot.list.correlation$spots[[env$LETTERS[count.cluster]]]$position <-
-          apply(apply(env$som.result$node.summary[cluster, 1:2], 2, range), 2, mean) + 0.5
+          apply(apply(env$som.result$node.summary[cluster, 1:2], 2, range), 2, mean)
 
         env$spot.list.correlation$spots[[env$LETTERS[count.cluster]]]$beta.statistic <-
           get.beta.statistic(set.data=env$metadata[env$spot.list.correlation$spots[[count.cluster]]$metagenes,,drop=FALSE],
@@ -564,7 +625,8 @@ pipeline.detectSpotsModules <- function(env)
 
   env$spot.list.correlation$overview.mask[!is.na(env$spot.list.correlation$overview.mask)] <-
     match(env$spot.list.correlation$overview.mask[!is.na(env$spot.list.correlation$overview.mask)], sort(unique(env$spot.list.correlation$overview.mask))[o])
-
+  env$spot.list.correlation$overview.map <- env$spot.list.correlation$overview.mask
+  
   env$spot.list.correlation$spotdata <-
     t(sapply(env$spot.list.correlation$spots, function(x)
     {
@@ -579,8 +641,12 @@ pipeline.detectSpotsModules <- function(env)
 
   colnames(env$spot.list.correlation$spotdata) <- colnames(env$indata)
 
+  return(env)   
+}
 
-  ##### K-Means Clustering #####
+
+pipeline.detectKMeansModules <- function(env)
+{
   n.cluster <- ceiling( env$preferences$dim.1stLvlSom / 2 )
   prototypes <- env$metadata[round(seq(1, env$preferences$dim.1stLvlSom^2, length.out=n.cluster)),]
   res <- kmeans(env$metadata, prototypes)
@@ -597,7 +663,7 @@ pipeline.detectSpotsModules <- function(env)
 
     if (length(geneset.genes) > 0)
     {
-      env$spot.list.kmeans$overview.mask[as.numeric(nodes)] <- i
+      env$spot.list.kmeans$overview.mask[as.numeric(nodes)] <- ifelse( all(is.na(env$spot.list.kmeans$overview.mask)), 1, max(env$spot.list.kmeans$overview.mask,na.rm=TRUE)+1 )
       env$spot.list.kmeans$spots[[env$LETTERS[i]]] <- list()
       env$spot.list.kmeans$spots[[env$LETTERS[i]]]$metagenes <- as.numeric(nodes)
       env$spot.list.kmeans$spots[[env$LETTERS[i]]]$genes <- geneset.genes
@@ -605,7 +671,7 @@ pipeline.detectSpotsModules <- function(env)
       env$spot.list.kmeans$spots[[env$LETTERS[i]]]$mask[as.numeric(nodes)] <- 1
 
       env$spot.list.kmeans$spots[[env$LETTERS[i]]]$position <-
-        apply(apply(env$som.result$node.summary[nodes, 1:2], 2, range), 2, mean) + 0.5
+        apply(apply(env$som.result$node.summary[nodes, 1:2], 2, range), 2, mean)
 
       env$spot.list.kmeans$spots[[env$LETTERS[i]]]$beta.statistic <-
         get.beta.statistic(set.data=env$metadata[env$spot.list.kmeans$spots[[env$LETTERS[i]]]$metagenes,,drop=FALSE],
@@ -623,6 +689,7 @@ pipeline.detectSpotsModules <- function(env)
   
   env$spot.list.kmeans$overview.mask[!is.na(env$spot.list.kmeans$overview.mask)] <-
     match(env$spot.list.kmeans$overview.mask[!is.na(env$spot.list.kmeans$overview.mask)], sort(unique(env$spot.list.kmeans$overview.mask))[o])
+  env$spot.list.kmeans$overview.map <- env$spot.list.kmeans$overview.mask
 
   env$spot.list.kmeans$spotdata <-
     t(sapply(env$spot.list.kmeans$spots, function(x)
@@ -637,9 +704,13 @@ pipeline.detectSpotsModules <- function(env)
     }))
 
   colnames(env$spot.list.kmeans$spotdata) <- colnames(env$indata)
+  
+  return(env)   
+}
 
 
-  ##### Group Spots ######
+pipeline.detectGroupOverexpressionModules <- function(env)
+{
   if (length(unique(env$group.labels)) > 1)
   {
     group.metadata <- do.call(cbind, by(t(env$metadata), env$group.labels, colMeans))[,unique(env$group.labels)]
@@ -848,7 +919,7 @@ pipeline.detectSpotsModules <- function(env)
 
       if (length(spot.genes) > 0)
       {
-        env$spot.list.group.overexpression$overview.mask[which(!is.na(sample.spot.list[[i]]))] <- i
+        env$spot.list.group.overexpression$overview.mask[which(!is.na(sample.spot.list[[i]]))] <- ifelse( all(is.na(env$spot.list.group.overexpression$overview.mask)), 1, max(env$spot.list.group.overexpression$overview.mask,na.rm=TRUE)+1 )
         env$spot.list.group.overexpression$spots[[env$LETTERS[i]]] <- list()
         env$spot.list.group.overexpression$spots[[env$LETTERS[i]]]$metagenes <- spot.metagenes
         env$spot.list.group.overexpression$spots[[env$LETTERS[i]]]$genes <- spot.genes
@@ -904,9 +975,12 @@ pipeline.detectSpotsModules <- function(env)
     colnames(env$spot.list.group.overexpression$spotdata) <- colnames(env$indata)
   }
   
+  return(env)   
+}
+
   
-  
-	#### Distance Map Spots ####
+pipeline.detectDMapModules <- function(env)
+{
   uh <- rep(NA, env$preferences$dim.1stLvlSom^2)
   
   for (i in 1:env$preferences$dim.1stLvlSom^2)
@@ -979,7 +1053,7 @@ pipeline.detectSpotsModules <- function(env)
     
     if (length(spot.genes) > 0)
     {
-      env$spot.list.dmap$overview.mask[spot.metagenes] <- count.cluster
+      env$spot.list.dmap$overview.mask[spot.metagenes] <- ifelse( all(is.na(env$spot.list.dmap$overview.mask)), 1, max(env$spot.list.dmap$overview.mask,na.rm=TRUE)+1 )
       env$spot.list.dmap$spots[[env$LETTERS[count.cluster]]] <- list()
       env$spot.list.dmap$spots[[env$LETTERS[count.cluster]]]$metagenes <- spot.metagenes
       env$spot.list.dmap$spots[[env$LETTERS[count.cluster]]]$genes <- spot.genes
@@ -987,7 +1061,7 @@ pipeline.detectSpotsModules <- function(env)
       env$spot.list.dmap$spots[[env$LETTERS[count.cluster]]]$mask[spot.metagenes] <- 1
       
       env$spot.list.dmap$spots[[env$LETTERS[count.cluster]]]$position <-
-        colMeans(apply(env$som.result$node.summary[spot.metagenes, 1:2]+1, 2, range))
+        colMeans(apply(env$som.result$node.summary[spot.metagenes, 1:2], 2, range))
       
       env$spot.list.dmap$spots[[env$LETTERS[count.cluster]]]$beta.statistic <-
         get.beta.statistic(set.data=env$metadata[env$spot.list.dmap$spots[[env$LETTERS[count.cluster]]]$metagenes,,drop=FALSE],
@@ -1009,28 +1083,28 @@ pipeline.detectSpotsModules <- function(env)
       }
     }))
   
-  sig.spots <- which( apply( env$spot.list.dmap$spotdata, 1, function(x) sd(x) > sd(env$spot.list.dmap$spotdata,na.rm=T) ) )
-  if( length(sig.spots) > 0 )
-  {
-    env$spot.list.dmap$spots <- env$spot.list.dmap$spots[sig.spots]
-    env$spot.list.dmap$overview.mask[which(!env$spot.list.dmap$overview.mask%in%sig.spots)] <- NA
-    env$spot.list.dmap$overview.mask[!is.na(env$spot.list.dmap$overview.mask  )] <-
-      match(env$spot.list.dmap$overview.mask[!is.na(env$spot.list.dmap$overview.mask)], sort(unique(na.omit(as.vector(env$spot.list.dmap$overview.mask)))))
-  }
+  # sig.spots <- which( apply( env$spot.list.dmap$spotdata, 1, function(x) sd(x) > sd(env$spot.list.dmap$spotdata,na.rm=T) ) )
+  # if( length(sig.spots) > 0 )
+  # {
+  #   env$spot.list.dmap$spots <- env$spot.list.dmap$spots[sig.spots]
+  #   env$spot.list.dmap$overview.mask[which(!env$spot.list.dmap$overview.mask%in%sig.spots)] <- NA
+  #   env$spot.list.dmap$overview.mask[!is.na(env$spot.list.dmap$overview.mask  )] <-
+  #     match(env$spot.list.dmap$overview.mask[!is.na(env$spot.list.dmap$overview.mask)], sort(unique(na.omit(as.vector(env$spot.list.dmap$overview.mask)))))
+  # }
   
-  start.spot <- which.min( apply( sapply(env$spot.list.dmap$spots, function(x) x$position ), 2, min ) )
+  # start.spot <- which.min( apply( sapply(env$spot.list.dmap$spots, function(x) x$position ), 2, min ) )
   
   spot.arcs <- sapply(env$spot.list.dmap$spots, function(x)
   {
     -atan2(x$position['y'] - env$preferences$dim.1stLvlSom / 2, x$position['x'] - env$preferences$dim.1stLvlSom / 2)
   })
   
-  spot.arcs <- spot.arcs - spot.arcs[start.spot]
+  # spot.arcs <- spot.arcs - spot.arcs[start.spot]
   
-  if (any(spot.arcs<0))
-  {
-    spot.arcs[which(spot.arcs<0)] <- spot.arcs[which(spot.arcs<0)] + (2 * pi)
-  }
+  # if (any(spot.arcs<0))
+  # {
+  #   spot.arcs[which(spot.arcs<0)] <- spot.arcs[which(spot.arcs<0)] + (2 * pi)
+  # }
   
   
   
@@ -1041,7 +1115,7 @@ pipeline.detectSpotsModules <- function(env)
   
   env$spot.list.dmap$overview.mask[!is.na(env$spot.list.dmap$overview.mask  )] <-
     match(env$spot.list.dmap$overview.mask[!is.na(env$spot.list.dmap$overview.mask)], sort(unique(na.omit(as.vector(env$spot.list.dmap$overview.mask))))[o])
-   
+  
   env$spot.list.dmap$spotdata <-
     t(sapply(env$spot.list.dmap$spots, function(x)
     {
@@ -1056,12 +1130,5 @@ pipeline.detectSpotsModules <- function(env)
   
   colnames(env$spot.list.dmap$spotdata) <- colnames(env$indata)
   
-  # check standard spot modules
-  if( length( env[[paste("spot.list.", env$preferences$standard.spot.modules,sep="")]]$spots ) < 2 )
-  {
-    env$preferences$standard.spot.modules <- "kmeans"
-    util.warn("Invalid value of \"standard.spot.modules\": Too few spots detected. Using \"kmeans\"")
-  } 
-
- return(env)   
+  return(env)   
 }

@@ -16,12 +16,9 @@ pipeline.groupAssignment <- function(env)
     
     if( length(pat.labels.test) <= 1 )
     {
-      util.warn("Too few different PATs for clustering. Using all PATs as classes.")
+      util.warn("Too few different PATs for clustering. PATs as classes.")
       
-      # assign new groups 
-      
-      env$group.labels <- apply( sample.pat.distances[pat.labels.sorted[1:length(pat.labels.sorted)],,drop=FALSE], 2, function(x) names(x)[which.min(x)] )
-      env$group.labels <- paste( env$group.labels, "*" )
+      env$group.labels <- env$pat.labels  
       names(env$group.labels) <- colnames(env$indata)
       
     } else
@@ -71,11 +68,9 @@ pipeline.groupAssignment <- function(env)
       
       if(env$preferences$activated.modules$reporting)
       {  
-        dir.create(paste(env$files.name, "- Results/Summary Sheets - Groups"), showWarnings=FALSE)
+        dir.create("Summary Sheets - Groups", showWarnings=FALSE)
         
-        filename <- file.path(paste(env$files.name, "- Results"),
-                              "Summary Sheets - Groups",
-                              "PAT-groups assignment.pdf")
+        filename <- file.path("Summary Sheets - Groups","PAT-groups assignment.pdf")
         
         util.info("Writing:", filename)
         pdf(filename, 29.7/2.54, 21/2.54, useDingbats=FALSE)
@@ -119,7 +114,6 @@ pipeline.groupAssignment <- function(env)
     env$metadata <- env$metadata[,o]
     env$indata.sample.mean <- env$indata.sample.mean[o]
 
-    env$spot.list.samples <- env$spot.list.samples[o]
     env <- pipeline.detectSpotsModules(env)
   }
   
@@ -129,7 +123,7 @@ pipeline.groupAssignment <- function(env)
   if (length(unique(env$group.labels)) < 2)
   {
     env$group.silhouette.coef <- rep(100, ncol(env$indata))
-    return()
+    return(env)
   }
 
 

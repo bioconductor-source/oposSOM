@@ -3,27 +3,27 @@ pipeline.sampleSimilarityAnalysisED <- function(env)
 
   #### t-SNE ####
   
-  # filename <- file.path(paste(env$files.name, "- Results"), "Sample Similarity Analysis", "t-SNE.pdf")
-  # util.info("Writing:", filename)
-  # pdf(filename, 21/2.54, 21/2.54, useDingbats=FALSE)
-  # 
-  # for (i in 1:2 )
-  # {
-  #   d <- if( i == 1 ) env[[paste("spot.list.",env$preferences$standard.spot.modules,sep="")]]$spotdata else env$metadata
-  #   n <- if( i == 1 ) paste( "module data (", env$preferences$standard.spot.modules, ")") else "metagene data"
-  #   
-  #   suppressMessages({  tsne.res <- tsne( t(d), perplexity=max(30,ncol(env$indata)/20), max_iter=3000 )  })
-  #   
-  #   par(mar=c(2,2,2,2))
-  #   plot(tsne.res, col=env$group.colors, pch=16)
-  #     title(paste("t-SNE on",n))  
-  #     legend("bottomright", as.character(unique(env$group.labels)), cex=0.5, text.col=env$groupwise.group.colors, bg="white")
-  # }
-  # dev.off()
+  filename <- file.path("Sample Similarity Analysis", "t-SNE.pdf")
+  util.info("Writing:", filename)
+  pdf(filename, 21/2.54, 21/2.54, useDingbats=FALSE)
+
+  for (i in 1:2 )
+  {
+    d <- if( i == 1 ) env[[paste("spot.list.",env$preferences$standard.spot.modules,sep="")]]$spotdata else env$metadata
+    n <- if( i == 1 ) paste( "module data (", env$preferences$standard.spot.modules, ")") else "metagene data"
+    
+    suppressMessages({  tsne.res <- tsne( t(d), perplexity=max(30,ncol(env$indata)/20), max_iter=500 )  })
+    
+    par(mar=c(2,2,2,2))
+    plot(tsne.res, col=env$group.colors, pch=16)
+      title(paste("t-SNE on",n))  
+      legend("bottomright", as.character(unique(env$group.labels)), cex=0.5, text.col=env$groupwise.group.colors, bg="white")
+  }
+  dev.off()
   
   #### Neighbor Joining ####
   
-  filename <- file.path(paste(env$files.name, "- Results"), "Sample Similarity Analysis", "Neighbor Joining.pdf")
+  filename <- file.path("Sample Similarity Analysis", "Neighbor Joining.pdf")
   util.info("Writing:", filename)
   pdf(filename, 21/2.54, 21/2.54, useDingbats=FALSE)
   
@@ -48,7 +48,7 @@ pipeline.sampleSimilarityAnalysisED <- function(env)
 
   #### Heatmaps ####
 
-  filename <- file.path(paste(env$files.name, "- Results"), "Sample Similarity Analysis", "Hierarchical Clustering.pdf")
+  filename <- file.path("Sample Similarity Analysis", "Hierarchical Clustering.pdf")
   util.info("Writing:", filename)
   pdf(filename, 29.7/2.54, 21/2.54, useDingbats=FALSE)
   

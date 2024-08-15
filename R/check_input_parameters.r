@@ -384,11 +384,11 @@ pipeline.checkInputParameters <- function(env)
     if( length(environment(env$color.palette.portraits))!=3 || !all( c("colors","ramp") %in% ls(environment(env$color.palette.portraits)) ) )
     {
       util.warn("Invalid value of \"color.palette.portraits\". Using standard scheme")
-      env$color.palette.portraits <- color.palette.portraits
+      env$color.palette.portraits <- if(env$preferences$colorblindsave.portraits) color.palette.portraits.cbs else color.palette.portraits
     }
   } else
   {
-    env$color.palette.portraits <- color.palette.portraits
+    env$color.palette.portraits <- if(env$preferences$colorblindsave.portraits) color.palette.portraits.cbs else color.palette.portraits
   }
   
   if (!is.null(env$color.palette.heatmaps)) # check if given color palette is a valid function
@@ -406,13 +406,12 @@ pipeline.checkInputParameters <- function(env)
   if(env$preferences$activated.modules$primary.analysis)
   {
     env$files.name <- env$preferences$dataset.name
-    while (file.exists(paste(env$files.name, ".RData", sep=""))) {
+    while (file.exists(paste(env$files.name, "- Results"))) {
       env$files.name <- paste(env$files.name, "+", sep="")
     }
     
     env$output.paths <-
-      c("CSV"=paste(env$files.name, "- Results/CSV Sheets"),
-        "Summary Sheets Samples"=paste(env$files.name, "- Results/Summary Sheets - Samples") )
+      c("CSV"="CSV Sheets","Summary Sheets Samples"="Summary Sheets - Samples")
     
     if( !grepl("german",sessionInfo()$locale,ignore.case=TRUE) &&
         !grepl("bioinf.uni-leipzig.de",Sys.info()["nodename"],ignore.case=TRUE) )

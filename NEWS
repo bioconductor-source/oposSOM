@@ -1,7 +1,45 @@
-2.11.1:
-+ multiple bugfixes e.g. caused by tsne package
-2.9.1:
-+ version bump to match Bioconductor version
+2.4.2:
++ Gene set collection update: Livermetastasis-related gene sets added
+2.4.1:
++ Gene set collection update: Martirosyan gene sets added
+2.4.0:
++ Colorblind-save portraits introduced
+2.3.1:
++ Gene set collection update: Konecny gene sets added
+2.3.0:
++ spot.list.samples object removed
+2.2.9:
++ Gene set collection updates & minor changes
+2.2.8:
++ Gene set update: Tirosh molecular programs for multiple cell types and cancer
+2.2.7:
++ Collection of multiple fixes and gene set updates
+2.2.6:
++ Bugfix for module masks when empty spots were dropped
+2.2.5:
++ Gene set collection update
+2.2.4:
++ Gene set collection update
+2.2.3:
++ Overexpression modules further enhanced; minor fixes for module overview maps; spot.borders() incorporated
+2.2.2:
++ Overexpression modules are now always contiguous
+2.2.1:
++ Gene set collection update
+2.2.0:
++ oposSOM runs now in 'results' folder directly
+2.1.9:
++ Bugfix in PAT group assignment with only one unique PAT
+2.1.8:
++ Bugfix in sample SOM visualization with portraits
+2.1.7:
++ Bugfixes in PAT assignment and group analysis statistics
+2.1.6:
++ New gene sets added; minor fixes
+2.1.5:
++ Module detection algorithms distributed over separated functions
+2.1.4:
++ Revision of differential expression statistics and data structures
 2.1.3:
 + PAT letters now ordered according to module activation frequency
 2.1.2:
